@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    /* Environment Settings */
+    "target": "ESNext",
+    "module": "ESNext",           // Allows import/export syntax
+    "moduleResolution": "Bundler", // Best for tsx and modern node tools
+    "lib": ["ESNext"],
+    "types": ["node"],
+
+    /* Interop & Compatibility */
+    "esModuleInterop": true,      // Required for importing CommonJS like 'express'
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Strictness - Kept your preferences */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+
+    /* The Fix for your Error */
+    "verbatimModuleSyntax": false, // This stops the ESM vs CommonJS error
+    "isolatedModules": true,
+    "moduleDetection": "force",
+
+    /* Output */
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}

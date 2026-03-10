@@ -1,9 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
-// We extend the Express Request type to include our user data
-interface AuthRequest extends Request {
+
+// Extended Request type with user property
+export interface AuthRequest extends Request {
   user?: { id: string; isAdmin: boolean };
+}
+
+interface TokenPayload {
+  id: string;
+  isAdmin: boolean;
 }
 
 export const protect = (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -15,10 +21,9 @@ export const protect = (req: AuthRequest, res: Response, next: NextFunction) => 
       token = req.headers.authorization.split(" ")[1];
 
       // 2. Verify token
-      const decoded = jwt.verify(token, env.JWT_SECRET!) as { id: string; isAdmin: boolean };
-
-      // 3. Attach user to request
-      req.user = decoded;
+      const secret = env.JWT_SECRET || '';
+      const decoded = jwt.verify(token!, env.JWT_SECRET as string) as unknown as TokenPayload;      // 3. Attach user to request
+      req.user = { id: decoded.id, isAdmin: decoded.isAdmin };
       
       return next(); // Move to the controller
     } catch (error) {

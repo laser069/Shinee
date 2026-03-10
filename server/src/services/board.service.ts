@@ -20,7 +20,7 @@ class BoardService {
     return await Board.findOne({ _id: boardId, user: userId }).populate('tasks');
   }
 
-  async deleteBoard(boardId: true, userId: string) {
+  async deleteBoard(boardId: string, userId: string) {
     return await Board.findOneAndDelete({ _id: boardId, user: userId });
   }
 
