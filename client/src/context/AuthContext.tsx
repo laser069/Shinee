@@ -31,31 +31,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   // Check for existing auth data on mount
-  useEffect(() => {
-    const initializeAuth = () => {
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
+useEffect(() => {
+  const initializeAuth = async () => {
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
 
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setAuthToken(storedToken);
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setAuthToken(storedToken);
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
         
-        try {
-          const parsedUser = JSON.parse(storedUser) as User;
-          setUser(parsedUser);
-        } catch (parseError) {
-          console.error('Failed to parse stored user:', parseError);
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setToken(null);
-        }
+        // OPTIONAL: Verify the token with your backend here
+        // const freshUser = await userService.getProfile();
+        // setUser(freshUser); 
+      } catch (e) {
+        logout(); // Clean sweep if data is corrupt
       }
-      
-      setIsLoading(false);
-    };
+    }
+    
+    // We only set loading to false AFTER we've checked storage
+    setIsLoading(false); 
+  };
 
-    initializeAuth();
-  }, []);
+  initializeAuth();
+}, []);
 
   const login = async (credentials: LoginPayload): Promise<void> => {
     try {
