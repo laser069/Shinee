@@ -215,7 +215,7 @@ Authorization: Bearer <token>
 
 ### Create Board
 ```
-POST /users/boards
+POST /boards
 ```
 
 **Headers:**
@@ -244,7 +244,7 @@ Authorization: Bearer <token>
 
 ### Get All Boards
 ```
-GET /users/boards
+GET /boards
 ```
 
 **Headers:**
@@ -268,7 +268,7 @@ Authorization: Bearer <token>
 
 ### Get Board Details
 ```
-GET /users/boards/:id
+GET /boards/:id
 ```
 
 **Headers:**
@@ -297,7 +297,7 @@ Authorization: Bearer <token>
 
 ### Update Board
 ```
-PATCH /users/boards/:id
+PATCH /boards/:id
 ```
 
 **Headers:**
@@ -326,7 +326,7 @@ Authorization: Bearer <token>
 
 ### Delete Board
 ```
-DELETE /users/boards/:id
+DELETE /boards/:id
 ```
 
 **Headers:**
@@ -347,7 +347,7 @@ Authorization: Bearer <token>
 
 ### Create Task
 ```
-POST /users/tasks
+POST /tasks
 ```
 
 **Headers:**
@@ -380,7 +380,7 @@ Authorization: Bearer <token>
 
 ### Get User Tasks
 ```
-GET /users/tasks
+GET /tasks
 ```
 
 **Headers:**
@@ -405,7 +405,7 @@ Authorization: Bearer <token>
 
 ### Update Task
 ```
-PATCH /users/tasks/:id
+PATCH /tasks/:id
 ```
 
 **Headers:**
@@ -435,7 +435,7 @@ Authorization: Bearer <token>
 
 ### Delete Task
 ```
-DELETE /users/tasks/:id
+DELETE /tasks/:id
 ```
 
 **Headers:**

@@ -253,7 +253,7 @@ curl -X GET http://localhost:5000/api/users/profile \
 ### Create Board
 Creates a new board for the authenticated user.
 
-**Endpoint:** `POST /api/users/boards`
+**Endpoint:** `POST /api/boards`
 
 **Headers:**
 ```http
@@ -271,7 +271,7 @@ const CreateBoardSchema = z.object({
 
 **Request:**
 ```bash
-curl -X POST http://localhost:5000/api/users/boards \
+curl -X POST http://localhost:5000/api/boards \
   -H "Authorization: Bearer <your-jwt-token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -296,7 +296,7 @@ curl -X POST http://localhost:5000/api/users/boards \
 ### Get All Boards
 Retrieves all boards owned by the authenticated user.
 
-**Endpoint:** `GET /api/users/boards`
+**Endpoint:** `GET /api/boards`
 
 **Headers:**
 ```http
@@ -305,7 +305,7 @@ Authorization: Bearer <token>
 
 **Request:**
 ```bash
-curl -X GET http://localhost:5000/api/users/boards \
+curl -X GET http://localhost:5000/api/boards \
   -H "Authorization: Bearer <your-jwt-token>"
 ```
 
@@ -335,7 +335,7 @@ curl -X GET http://localhost:5000/api/users/boards \
 ### Get Board Details
 Retrieves a specific board by ID with populated tasks.
 
-**Endpoint:** `GET /api/users/boards/:id`
+**Endpoint:** `GET /api/boards/:id`
 
 **Headers:**
 ```http
@@ -344,7 +344,7 @@ Authorization: Bearer <token>
 
 **Request:**
 ```bash
-curl -X GET http://localhost:5000/api/users/boards/507f1f77bcf86cd799439012 \
+curl -X GET http://localhost:5000/api/boards/507f1f77bcf86cd799439012 \
   -H "Authorization: Bearer <your-jwt-token>"
 ```
 
@@ -368,7 +368,7 @@ curl -X GET http://localhost:5000/api/users/boards/507f1f77bcf86cd799439012 \
 ### Update Board
 Updates the board title.
 
-**Endpoint:** `PATCH /api/users/boards/:id`
+**Endpoint:** `PATCH /api/boards/:id`
 
 **Headers:**
 ```http
@@ -386,7 +386,7 @@ const UpdateBoardSchema = z.object({
 
 **Request:**
 ```bash
-curl -X PATCH http://localhost:5000/api/users/boards/507f1f77bcf86cd799439012 \
+curl -X PATCH http://localhost:5000/api/boards/507f1f77bcf86cd799439012 \
   -H "Authorization: Bearer <your-jwt-token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -415,7 +415,7 @@ curl -X PATCH http://localhost:5000/api/users/boards/507f1f77bcf86cd799439012 \
 ### Delete Board
 Deletes a board by ID.
 
-**Endpoint:** `DELETE /api/users/boards/:id`
+**Endpoint:** `DELETE /api/boards/:id`
 
 **Headers:**
 ```http
@@ -424,7 +424,7 @@ Authorization: Bearer <token>
 
 **Request:**
 ```bash
-curl -X DELETE http://localhost:5000/api/users/boards/507f1f77bcf86cd799439012 \
+curl -X DELETE http://localhost:5000/api/boards/507f1f77bcf86cd799439012 \
   -H "Authorization: Bearer <your-jwt-token>"
 ```
 
@@ -445,7 +445,7 @@ curl -X DELETE http://localhost:5000/api/users/boards/507f1f77bcf86cd799439012 \
 ### Create Task
 Creates a new task and adds it to a board.
 
-**Endpoint:** `POST /api/users/tasks`
+**Endpoint:** `POST /api/tasks`
 
 **Headers:**
 ```http
@@ -465,7 +465,7 @@ const CreateTaskSchema = z.object({
 
 **Request:**
 ```bash
-curl -X POST http://localhost:5000/api/users/tasks \
+curl -X POST http://localhost:5000/api/tasks \
   -H "Authorization: Bearer <your-jwt-token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -494,7 +494,7 @@ curl -X POST http://localhost:5000/api/users/tasks \
 ### Get User Tasks
 Retrieves all tasks for the authenticated user.
 
-**Endpoint:** `GET /api/users/tasks`
+**Endpoint:** `GET /api/tasks`
 
 **Headers:**
 ```http
@@ -503,7 +503,7 @@ Authorization: Bearer <token>
 
 **Request:**
 ```bash
-curl -X GET http://localhost:5000/api/users/tasks \
+curl -X GET http://localhost:5000/api/tasks \
   -H "Authorization: Bearer <your-jwt-token>"
 ```
 
@@ -527,7 +527,7 @@ curl -X GET http://localhost:5000/api/users/tasks \
 ### Update Task
 Updates a task's properties.
 
-**Endpoint:** `PATCH /api/users/tasks/:id`
+**Endpoint:** `PATCH /api/tasks/:id`
 
 **Headers:**
 ```http
@@ -536,7 +536,7 @@ Authorization: Bearer <token>
 
 **Request:**
 ```bash
-curl -X PATCH http://localhost:5000/api/users/tasks/507f1f77bcf86cd799439013 \
+curl -X PATCH http://localhost:5000/api/tasks/507f1f77bcf86cd799439013 \
   -H "Authorization: Bearer <your-jwt-token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -566,7 +566,7 @@ curl -X PATCH http://localhost:5000/api/users/tasks/507f1f77bcf86cd799439013 \
 ### Delete Task
 Deletes a task by ID.
 
-**Endpoint:** `DELETE /api/users/tasks/:id`
+**Endpoint:** `DELETE /api/tasks/:id`
 
 **Headers:**
 ```http
@@ -575,7 +575,7 @@ Authorization: Bearer <token>
 
 **Request:**
 ```bash
-curl -X DELETE http://localhost:5000/api/users/tasks/507f1f77bcf86cd799439013 \
+curl -X DELETE http://localhost:5000/api/tasks/507f1f77bcf86cd799439013 \
   -H "Authorization: Bearer <your-jwt-token>"
 ```
 
@@ -1013,17 +1013,17 @@ curl -X GET http://localhost:5000/api/users/profile \
   -H "Authorization: Bearer TOKEN"
 
 # 4. Create a board (replace TOKEN with actual token)
-curl -X POST http://localhost:5000/api/users/boards \
+curl -X POST http://localhost:5000/api/boards \
   -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"My Board"}'
 
 # 5. Get all boards (replace TOKEN with actual token)
-curl -X GET http://localhost:5000/api/users/boards \
+curl -X GET http://localhost:5000/api/boards \
   -H "Authorization: Bearer TOKEN"
 
 # 6. Create a task in the board (replace TOKEN and BOARD_ID)
-curl -X POST http://localhost:5000/api/users/tasks \
+curl -X POST http://localhost:5000/api/tasks \
   -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"Task 1","description":"Do something","status":"todo","boardId":"BOARD_ID"}'
