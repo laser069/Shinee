@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import * as UserService from "../services/user.service.js";
+import userService from "../services/user.service.js"; // Import the singleton instance
 import { UserRegistrationSchema } from "../schemas/user.schema.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import User from "../models/User.js"; // Import your model for the profile lookup
-import { env } from "../config/env";
-// Extend Request to include the user property from your middleware
+import { env } from "../config/env.js";
+
+// Extend Request for protected routes
 interface AuthRequest extends Request {
   user?: { id: string; isAdmin: boolean };
 }
@@ -13,11 +13,13 @@ interface AuthRequest extends Request {
 export const register = async (req: Request, res: Response) => {
   try {
     const validatedData = UserRegistrationSchema.parse(req.body);
-    const user = await UserService.createUser(validatedData);
+    
+    // Using the class method from the singleton instance
+    const user = await userService.createUser(validatedData);
 
     const token = jwt.sign(
       { id: user._id, isAdmin: user.isAdmin },
-      env.JWT_SECRET!,
+      env.JWT_SECRET as string,
       { expiresIn: "30d" }
     );
 
@@ -26,28 +28,31 @@ export const register = async (req: Request, res: Response) => {
     
   } catch (error: any) {
     if (error.name === "ZodError") {
-      return res.status(400).json({ message: error.errors[0].message });
+      return res.status(400).json({ message: error.errors[0]?.message });
     }
     res.status(400).json({ message: error.message });
   }
 };
 
-
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
-    // 1. Find user
-    const user = await UserService.findUserByEmail(email);
+    // 1. Find user using the service instance
+    const user = await userService.findUserByEmail(email);
 
-    // 2. Compare passwords (C++ devs love this part—it's high-perf math!)
+    // 2. Compare passwords
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
-        token: jwt.sign({ id: user._id }, env.JWT_SECRET!, { expiresIn: "30d" }),
+        token: jwt.sign(
+          { id: user._id, isAdmin: user.isAdmin }, 
+          env.JWT_SECRET as string, 
+          { expiresIn: "30d" }
+        ),
       });
     } else {
       res.status(401).json({ message: "Invalid email or password" });
@@ -59,13 +64,12 @@ export const login = async (req: Request, res: Response) => {
 
 export const getProfile = async (req: AuthRequest, res: Response) => {
   try {
-    // 1. req.user was populated by the 'protect' middleware
     if (!req.user) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
-    // 2. Find user in DB by ID (excluding the password)
-    const user = await User.findById(req.user.id).select("-password");
+    // Using the service instance for lookup
+    const user = await userService.findUserById(req.user.id);
 
     if (user) {
       res.json(user);
@@ -77,5 +81,4 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Use ES Export instead of module.exports
-export default { register, getProfile };
+export default { register, login, getProfile };

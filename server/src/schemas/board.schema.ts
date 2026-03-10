@@ -22,6 +22,18 @@ export const CreateBoardSchema = BoardSchema.omit({
   updatedAt: true 
 });
 
+export const UpdateBoardSchema = z.object({
+  body: z.object({
+    title: z
+      .string()
+      .min(1, "Title is required") // Acts as the 'required' check
+      .min(3, "Title must be at least 3 characters")
+      .max(50, "Title cannot exceed 50 characters")
+      .trim(),
+  }),
+});
+
 // Types for your services
 export type Board = z.infer<typeof BoardSchema>;
 export type CreateBoardPayload = z.infer<typeof CreateBoardSchema>;
+export type UpdateBoardSchema = z.infer<typeof UpdateBoardSchema>;

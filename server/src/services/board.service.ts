@@ -24,13 +24,14 @@ class BoardService {
     return await Board.findOneAndDelete({ _id: boardId, user: userId });
   }
 
-  async updateBoardTitle(boardId: string, userId: string, title: string) {
-    return await Board.findOneAndUpdate(
-      { _id: boardId, user: userId },
-      { title, updatedAt: new Date() },
-      { new: true }
-    );
-  }
+async updateBoardTitle(boardId: string, userId: string, newTitle: string) {
+  const updatedBoard = await Board.findOneAndUpdate(
+    { _id: boardId, user: userId }, // Security: Must own the board
+    { $set: { title: newTitle } },  // Only update the title field
+    { new: true, runValidators: true } // Return the updated doc
+  );
+  return updatedBoard;
+}
 }
 
 export default new BoardService();

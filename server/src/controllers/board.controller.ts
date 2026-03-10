@@ -53,3 +53,28 @@ export const deleteBoard = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const updateBoard = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const id = req.params.id as string;
+    const { title } = req.body;
+
+    if (!title) {
+      return res.status(400).json({ message: "Title is required" });
+    }
+
+    const board = await boardService.updateBoardTitle(id, req.user.id, title);
+
+    if (!board) {
+      return res.status(404).json({ message: "Board not found or unauthorized" });
+    }
+
+    res.json(board);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
