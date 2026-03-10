@@ -10,6 +10,7 @@ const envSchema = z.object({
     .refine((val) => !isNaN(val), {
       message: "PORT must be a number",
     }),
+    JWT_SECRET: z.string(),
 });
 
 export const env = envSchema.parse(process.env);
