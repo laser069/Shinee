@@ -12,6 +12,7 @@ Complete technical documentation for the Shinee Task Management API.
 - [User Endpoints](#user-endpoints)
 - [Board Endpoints](#board-endpoints)
 - [Task Endpoints](#task-endpoints)
+- [Habit Endpoints](#habit-endpoints)
 - [Data Models](#data-models)
 - [Validation Schemas](#validation-schemas)
 - [Middleware](#middleware)
@@ -591,6 +592,153 @@ curl -X DELETE http://localhost:5000/api/tasks/507f1f77bcf86cd799439013 \
 
 ---
 
+## Habit Endpoints
+
+### Get Habit Dashboard
+Retrieves all habits with current progress for the authenticated user.
+
+**Endpoint:** `GET /api/habits`
+
+**Headers:**
+```http
+Authorization: Bearer <token>
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "60d5f1f77bcf86cd799439014",
+      "name": "Drink Water",
+      "category": "Health",
+      "trackingType": "binary",
+      "goal": {
+        "targetValue": 1,
+        "frequency": "daily"
+      },
+      "gamification": {
+        "currentStreak": 5,
+        "highestStreak": 10
+      },
+      "progress": 1,
+      "isCompletedToday": true
+    }
+  ]
+}
+```
+
+---
+
+### Create Habit
+Creates a new habit definition.
+
+**Endpoint:** `POST /api/habits`
+
+**Validation Schema:** `HabitValidationSchema`
+
+**Request:**
+```json
+{
+  "name": "Read Books",
+  "category": "Growth",
+  "trackingType": "numeric",
+  "goal": {
+    "targetValue": 20,
+    "unit": "pages",
+    "frequency": "daily"
+  }
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "60d5f1f77bcf86cd799439015",
+    "name": "Read Books",
+    "category": "Growth",
+    "trackingType": "numeric",
+    "goal": {
+      "targetValue": 20,
+      "unit": "pages",
+      "frequency": "daily"
+    }
+  }
+}
+```
+
+---
+
+### Log Activity
+Logs progress for a specific habit.
+
+**Endpoint:** `POST /api/habits/log`
+
+**Validation Schema:** `LogValidationSchema`
+
+**Request:**
+```json
+{
+  "habitId": "60d5f1f77bcf86cd799439015",
+  "value": 10,
+  "date": "2024-01-15T10:30:00Z"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Earned 10 points!",
+  "data": {
+    "_id": "60d5f1f77bcf86cd799439016",
+    "habitId": "60d5f1f77bcf86cd799439015",
+    "value": 10,
+    "pointsEarned": 10
+  }
+}
+```
+
+---
+
+### Handle Relapse
+Resets streaks for sobriety/quit habits.
+
+**Endpoint:** `PATCH /api/habits/:id/relapse`
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Streak reset. Stay strong!",
+  "data": { ... }
+}
+```
+
+---
+
+### Get Habit Stats
+Get countdown/sobriety stats for 'Quit' habits.
+
+**Endpoint:** `GET /api/habits/:id/stats`
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "daysSinceLastRelapse": 15,
+    "currentStreak": 15,
+    "highestStreak": 30
+  }
+}
+```
+
+---
+
 ## Data Models
 
 ### User Model
@@ -639,6 +787,48 @@ const taskSchema = new mongoose.Schema({
 })
 
 export default mongoose.model('Task',taskSchema);
+```
+
+### Habit Model
+[`src/models/Habit.ts`](src/models/Habit.ts)
+```typescript
+const HabitSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  name: { type: String, required: true },
+  category: { 
+    type: String, 
+    enum: ['Health', 'Growth', 'Quit', 'Social', 'Milestone'], 
+    required: true 
+  },
+  trackingType: {
+    type: String,
+    enum: ['numeric', 'binary', 'countdown'],
+    required: true
+  },
+  goal: {
+    targetValue: { type: Number, default: 1 }, 
+    unit: { type: String },
+    frequency: { type: String, enum: ['daily', 'weekly'], default: 'daily' }
+  },
+  gamification: {
+    basePoints: { type: Number, default: 10 },
+    currentStreak: { type: Number, default: 0 },
+    highestStreak: { type: Number, default: 0 },
+    lastRelapseDate: { type: Date, default: Date.now }
+  }
+}, { timestamps: true });
+```
+
+### Log Model
+```typescript
+const LogSchema = new mongoose.Schema({
+  habitId: { type: mongoose.Schema.Types.ObjectId, ref: 'Habit', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  date: { type: Date, default: () => new Date().setHours(0,0,0,0) },
+  value: { type: Number, required: true },
+  pointsEarned: { type: Number, default: 0 },
+  multiplierAtTime: { type: Number, default: 1 }
+}, { timestamps: true });
 ```
 
 ---
@@ -721,6 +911,31 @@ export const CreateTaskSchema = TaskSchema.omit({
 
 export type Task = z.infer<typeof TaskSchema>;
 export type CreateTaskPayload = z.infer<typeof CreateTaskSchema>;
+```
+
+### Habit Validation
+[`src/schemas/habit.schema.ts`](src/schemas/habit.schema.ts)
+```typescript
+export const HabitValidationSchema = z.object({
+  name: z.string().min(2).max(50),
+  category: z.enum(['Health', 'Growth', 'Quit', 'Social', 'Milestone']),
+  trackingType: z.enum(['numeric', 'binary', 'countdown']),
+  goal: z.object({
+    targetValue: z.number().positive().default(1),
+    unit: z.string().optional(),
+    frequency: z.enum(['daily', 'weekly']).default('daily'),
+  }),
+  gamification: z.object({
+    basePoints: z.number().min(0).default(10),
+  }).optional(),
+});
+
+export const LogValidationSchema = z.object({
+  habitId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+  value: z.number().min(0),
+  date: z.string().datetime().optional(),
+  note: z.string().max(200).optional(),
+});
 ```
 
 ---
@@ -875,6 +1090,39 @@ router.route("/:id")
 export default router;
 ```
 
+### Habit Routes
+[`src/routes/habit.routes.ts`](src/routes/habit.routes.ts)
+```typescript
+import { Router } from "express";
+import { 
+  createHabit, 
+  getDashboard, 
+  logActivity, 
+  handleRelapse,
+  getQuitStats 
+} from "../controllers/habit.controller.js";
+import { protect } from "../middleware/auth.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
+
+const router = Router();
+router.use(protect);
+
+router.route("/")
+  .get(getDashboard)
+  .post(validate(HabitValidationSchema), createHabit);
+
+router.route("/log")
+  .post(validate(LogValidationSchema), logActivity);
+
+router.route("/:id/relapse")
+  .patch(handleRelapse);
+
+router.route("/:id/stats")
+  .get(getQuitStats);
+
+export default router;
+```
+
 ---
 
 ## Services
@@ -989,6 +1237,28 @@ class TaskService {
 }
 
 export default new TaskService();
+```
+
+### Habit Service
+[`src/services/habit.service.ts`](src/services/habit.service.ts)
+```typescript
+class HabitService {
+  async createHabit(userId: string, data: HabitInput) {
+    return await Habit.create({ ...data, userId });
+  }
+
+  async getHabitProgress(userId: string) {
+    // Aggregation logic for progress and streaks
+  }
+
+  async logActivity(userId: string, data: LogInput) {
+    // Logging logic with points calculation
+  }
+
+  async handleRelapse(userId: string, habitId: string) {
+    // Reset streak logic
+  }
+}
 ```
 
 ---
