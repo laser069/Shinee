@@ -135,4 +135,29 @@ export interface RegisterResponse {
   token: string;
 }
 
+// Task status enum
+export type TaskStatus = 'todo' | 'inprogress' | 'done';
+
+// Task interface
+export interface Task {
+  _id: string;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  user: string;
+  boardId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Board interface
+export interface Board {
+  _id: string;
+  title: string;
+  user: string;
+  tasks: string[]; // Array of task IDs, not full Task objects
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export default apiClient;

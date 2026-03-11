@@ -1,5 +1,4 @@
-import apiClient from '../lib/apiClient';
-import type { User, LoginResponse, RegisterResponse } from '../lib/apiClient';
+import apiClient, { type User, type LoginResponse, type RegisterResponse } from '../lib/apiClient';
 
 // Types for request payloads
 export interface RegisterPayload {
