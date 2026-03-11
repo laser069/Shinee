@@ -67,6 +67,18 @@ app.listen(env.PORT,()=>{
 })
 ```
 
+### Health Check
+Determine if the server is alive.
+
+**Endpoint:** `GET /ping`
+
+**Response (200 OK):**
+```json
+{
+  "message": "PONG!"
+}
+```
+
 ### Environment Configuration
 [`src/config/env.ts`](src/config/env.ts)
 ```typescript
@@ -246,6 +258,25 @@ curl -X GET http://localhost:5000/api/users/profile \
 **Error Responses:**
 - 401: "Not authorized"
 - 404: "User not found"
+
+---
+
+### Admin Panel
+Access restricted administrative content.
+
+**Endpoint:** `GET /api/users/admin-panel`
+
+**Headers:**
+```http
+Authorization: Bearer <admin-token>
+```
+
+**Response (200 OK):**
+```json
+{
+  "message": "Welcome to the Secret Admin Dashboard"
+}
+```
 
 ---
 
@@ -496,6 +527,11 @@ curl -X POST http://localhost:5000/api/tasks \
 Retrieves all tasks for the authenticated user.
 
 **Endpoint:** `GET /api/tasks`
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `boardId` | string | (Optional) Filter tasks by a specific board ID |
 
 **Headers:**
 ```http
