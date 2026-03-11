@@ -1,4 +1,28 @@
 import mongoose from "mongoose";
+import { Document,Types } from "mongoose";
+// Define the nested structures
+interface IGamification {
+  basePoints: number;
+  currentStreak: number;
+  highestStreak: number;
+  lastRelapseDate: Date;
+}
+
+interface IGoal {
+  targetValue: number;
+  unit?: string;
+  frequency: 'daily' | 'weekly';
+}
+
+// Define the full Habit Document
+export interface IHabit extends Document {
+  userId: Types.ObjectId;
+  name: string;
+  category: 'Health' | 'Growth' | 'Quit' | 'Social' | 'Milestone';
+  trackingType: 'numeric' | 'binary' | 'countdown';
+  goal: IGoal;
+  gamification: IGamification; // No '?' means it's required
+}
 
 // --- 1. THE LOG SCHEMA (The daily data) ---
 // Each time you walk, code, or call someone, a new entry is created here.
