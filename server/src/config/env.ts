@@ -1,16 +1,15 @@
-import { z } from "zod";
+// config/env.ts
+import { z } from 'zod';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const envSchema = z.object({
-  MONGO_URI: z.string().min(1, "MONGO_URI is required"),
-
-  PORT: z
-    .string()
-    .default("5000")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "PORT must be a number",
-    }),
-    JWT_SECRET: z.string(),
+  JWT_SECRET: z.string().min(1, "JWT_SECRET is missing from .env"),
+  PORT: z.string().default("5000"),
+  MONGO_URI: z.string(),
 });
 
-export const env = envSchema.parse(process.env);
+// This will throw a clear error immediately when the server starts 
+// if a variable is missing, instead of crashing later.
+export const env: z.infer<typeof envSchema> = envSchema.parse(process.env);

@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User, LoginResponse } from '../lib/apiClient';
-import userService from '../service/userService';
-import type { RegisterPayload, LoginPayload } from '../service/userService';
+import userService from '../services/userService';
+import type { RegisterPayload, LoginPayload } from '../services/userService';
 import { setAuthToken } from '../lib/apiClient';
 
 interface AuthContextType {

@@ -2,8 +2,11 @@ import express from 'express';
 import 'dotenv/config';
 import { env } from './config/env';
 import ConnectDB from './config/db';
-import userRoutes from './routes/user.route';
 import cors from 'cors';
+
+import userRoutes from './routes/user.route';
+import boardRoutes from './routes/board.route';
+import taskRoutes from './routes/task.route';
 
 const app = express();
 // const PORT =process.env.PORT
@@ -21,6 +24,9 @@ app.get("/ping",(req,res)=>{
     return res.status(200).json({message:'PONG!'});
 })
 app.use("/api/users",userRoutes);
+app.use("/api/boards",boardRoutes);
+app.use("/api/tasks",taskRoutes);
+
 app.listen(env.PORT,()=>{
     console.log(`Server running at http://localhost:${env.PORT}`);
 })
