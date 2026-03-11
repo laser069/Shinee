@@ -51,3 +51,50 @@ export interface Board {
   createdAt?: string;
   updatedAt?: string;
 }
+// Habit types
+export type HabitCategory = 'Health' | 'Growth' | 'Quit' | 'Social' | 'Milestone';
+export type HabitTrackingType = 'numeric' | 'binary' | 'countdown';
+
+export interface HabitGoal {
+  targetValue: number;
+  unit?: string;
+  frequency: 'daily' | 'weekly';
+}
+
+export interface HabitGamification {
+  basePoints: number;
+  currentStreak: number;
+  highestStreak: number;
+  lastRelapseDate?: string;
+}
+
+export interface Habit {
+  _id: string;
+  userId: string;
+  name: string;
+  category: HabitCategory;
+  trackingType: HabitTrackingType;
+  goal: HabitGoal;
+  gamification: HabitGamification;
+  createdAt: string;
+  updatedAt: string;
+  progress?: number; // Calculated field from backend
+  isCompletedToday?: boolean; // Calculated field from backend
+}
+
+export interface HabitLog {
+  _id: string;
+  habitId: string;
+  userId: string;
+  date: string;
+  value: number;
+  pointsEarned: number;
+  multiplierAtTime: number;
+  createdAt: string;
+}
+
+export interface HabitStats {
+  daysSinceLastRelapse: number;
+  currentStreak: number;
+  highestStreak: number;
+}
