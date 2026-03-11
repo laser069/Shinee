@@ -1,24 +1,56 @@
 import { z } from "zod";
 
-export const HabitValidationSchema = z.object({
-  name: z.string().min(1, "Habit name is required"),
-  description: z.string().optional(),
-  category: z.enum(['Health', 'Growth', 'Quit', 'Social', 'Finance', 'Mind']),
-  ui: z.object({
-    icon: z.string().default('🎯'),
-    color: z.string().default('indigo')
-  }),
-  goal: z.object({
-    type: z.enum(['boolean', 'numeric']),
-    targetValue: z.number().min(1),
-    unit: z.string(),
-    frequency: z.enum(['daily', 'weekly']),
-    scheduledDays: z.array(z.number()).max(7),
-    weeklyTarget: z.number().max(7).optional(),
-    difficulty: z.enum(['easy', 'medium', 'hard'])
-  }),
-  reminders: z.object({
-    enabled: z.boolean().default(false),
-    time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format").optional()
-  }).optional()
+export const HabitSchema = z.object({
+  _id: z.string().optional(),
+  user: z.string(),
+  name: z.string().min(1, "Habit name is required").max(100),
+  icon: z.string().default("✅"),
+  color: z.string().default("#3B82F6"),
+
+  // Frequency Logic
+  frequencyType: z.enum(["fixed", "flexible"]),
+  fixedDays: z.array(z.number().min(0).max(6)).default([]),
+  goalCount: z.number().min(1).max(7).default(1),
+
+  // Gamification (Usually managed by backend, but defined here for type safety)
+  dailyStreak: z.number().default(0),
+  weeklyStreak: z.number().default(0),
+  longestStreak: z.number().default(0),
+  lastCompletedDate: z.date().optional().nullable(),
+  
+  multiplier: z.number().default(1.0),
+  totalPoints: z.number().default(0),
+
+  isActive: z.boolean().default(true),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 });
+
+// For creating a habit (Input from user)
+export const CreateHabitSchema = HabitSchema.omit({
+  _id: true,
+  dailyStreak: true,
+  weeklyStreak: true,
+  longestStreak: true,
+  lastCompletedDate: true,
+  multiplier: true,
+  totalPoints: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// For updating habit settings
+export const UpdateHabitSchema = z.object({
+  body: HabitSchema.pick({
+    name: true,
+    icon: true,
+    color: true,
+    frequencyType: true,
+    fixedDays: true,
+    goalCount: true,
+    isActive: true,
+  }).partial(),
+});
+
+export type Habit = z.infer<typeof HabitSchema>;
+export type CreateHabitPayload = z.infer<typeof CreateHabitSchema>;

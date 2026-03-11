@@ -1,83 +1,54 @@
-import mongoose, { Schema, Document } from "mongoose";
-
-// models/Habit.ts
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IHabit extends Document {
-  userId: mongoose.Types.ObjectId;
+  user: Types.ObjectId;
   name: string;
-  description?: string;
-  category: 'Health' | 'Growth' | 'Quit' | 'Social' | 'Finance' | 'Mind';
-  isArchived: boolean;
-  ui: {
-    icon: string;
-    color: string;
-  };
-  goal: {
-    type: 'boolean' | 'numeric';
-    targetValue: number;
-    unit: string;
-    frequency: 'daily' | 'weekly';
-    scheduledDays: number[];
-    weeklyTarget: number;
-    difficulty: 'easy' | 'medium' | 'hard';
-  };
-  reminders: {
-    enabled: boolean;
-    time: string;
-  };
-  // UPDATE THIS SECTION
-  stats: {
-    currentStreak: number;
-    bestStreak: number;
-    totalCompletions: number;
-    lastCompletedDate?: Date;
-    totalXP: number;      // <--- Add this
-    multiplier: number;   // <--- Add this
-  };
+  icon: string;
+  color: string;
+  
+  // Logic Config
+  frequencyType: 'fixed' | 'flexible';
+  fixedDays: number[]; // [0-6] where 0 is Sunday, 1 is Monday...
+  goalCount: number;   // e.g., 3 if they want to do it 3x a week
+  
+  // Gamification & Streaks
+  dailyStreak: number;
+  weeklyStreak: number;
+  longestStreak: number;
+  lastCompletedDate?: Date; // To verify if daily streak is still valid
+  
+  // Consistency Multiplier
+  multiplier: number;
+  totalPoints: number;
+  
+  isActive: boolean;
+  createdAt: Date;
 }
 
-const HabitSchema = new Schema<IHabit>({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+const habitSchema = new Schema<IHabit>({
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true, trim: true },
-  description: { type: String },
-  category: { type: String, default: 'Growth' },
-  isArchived: { type: Boolean, default: false },
-  ui: {
-    icon: { type: String, default: '🎯' },
-    color: { type: String, default: 'indigo' }
-  },
-  goal: {
-    type: { type: String, enum: ['boolean', 'numeric'], default: 'boolean' },
-    targetValue: { type: Number, default: 1 },
-    unit: { type: String, default: 'times' },
-    frequency: { type: String, enum: ['daily', 'weekly'], default: 'daily' },
-    scheduledDays: { type: [Number], default: [] },
-    weeklyTarget: { type: Number, default: 0 },
-    difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'medium' }
-  },
-  reminders: {
-    enabled: { type: Boolean, default: false },
-    time: { type: String }
-  },
-  // Add this to your Habit Schema stats
-  stats: {
-    currentStreak: { type: Number, default: 0 },
-    bestStreak: { type: Number, default: 0 },
-    totalXP: { type: Number, default: 0 },
-    multiplier: { type: Number, default: 1.0 } // 1.0x, 1.2x, 1.5x etc.
-  }
-}, { timestamps: true });
+  icon: { type: String, default: '✅' },
+  color: { type: String, default: '#3B82F6' }, // Tailwind blue-500
 
-// ENHANCED LOG: Added "Notes" for the daily reflection
-const LogSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  habitId: { type: Schema.Types.ObjectId, ref: 'Habit', required: true },
-  date: { type: Date, required: true },
-  value: { type: Number, required: true },
-  note: { type: String }, // "Felt great today!", "Hard to start but finished"
-  mood: { type: Number, min: 1, max: 5 }, // 1-5 star mood rating
-  pointsEarned: { type: Number, default: 0 }
+  frequencyType: { 
+    type: String, 
+    enum: ['fixed', 'flexible'], 
+    default: 'flexible' 
+  },
+  fixedDays: [{ type: Number, min: 0, max: 6 }],
+  goalCount: { type: Number, default: 1 },
+
+  dailyStreak: { type: Number, default: 0 },
+  weeklyStreak: { type: Number, default: 0 },
+  longestStreak: { type: Number, default: 0 },
+  lastCompletedDate: { type: Date },
+
+  multiplier: { type: Number, default: 1.0 },
+  totalPoints: { type: Number, default: 0 },
+
+  isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
 });
 
-export const Habit = mongoose.model<IHabit>('Habit', HabitSchema);
-export const Log = mongoose.model('Log', LogSchema);
+export const Habit = model<IHabit>('Habit', habitSchema);
