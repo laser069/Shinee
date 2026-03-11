@@ -649,17 +649,17 @@ Authorization: Bearer <token>
       "_id": "60d5f1f77bcf86cd799439014",
       "name": "Drink Water",
       "category": "Health",
-      "trackingType": "binary",
       "goal": {
-        "targetValue": 1,
-        "frequency": "daily"
+        "scheduledDays": [1, 2, 3, 4, 5]
       },
-      "gamification": {
-        "currentStreak": 5,
-        "highestStreak": 10
-      },
-      "progress": 1,
-      "isCompletedToday": true
+      "grid": [
+        {
+          "date": "2024-01-15T00:00:00Z",
+          "isCompleted": true,
+          "isScheduled": true
+        }
+      ],
+      "weeklyProgress": 80
     }
   ]
 }
@@ -708,18 +708,15 @@ Creates a new habit definition.
 
 ---
 
-### Log Activity
-Logs progress for a specific habit.
+### Toggle Habit Day
+Logs or un-logs progress for a specific day.
 
-**Endpoint:** `POST /api/habits/log`
-
-**Validation Schema:** `LogValidationSchema`
+**Endpoint:** `POST /api/habits/toggle`
 
 **Request:**
 ```json
 {
   "habitId": "60d5f1f77bcf86cd799439015",
-  "value": 10,
   "date": "2024-01-15T10:30:00Z"
 }
 ```
@@ -728,48 +725,24 @@ Logs progress for a specific habit.
 ```json
 {
   "success": true,
-  "message": "Earned 10 points!",
   "data": {
-    "_id": "60d5f1f77bcf86cd799439016",
-    "habitId": "60d5f1f77bcf86cd799439015",
-    "value": 10,
-    "pointsEarned": 10
+    "status": "checked"
   }
 }
 ```
 
 ---
 
-### Handle Relapse
-Resets streaks for sobriety/quit habits.
+### Delete Habit
+Deletes a habit and all associated logs.
 
-**Endpoint:** `PATCH /api/habits/:id/relapse`
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Streak reset. Stay strong!",
-  "data": { ... }
-}
-```
-
----
-
-### Get Habit Stats
-Get countdown/sobriety stats for 'Quit' habits.
-
-**Endpoint:** `GET /api/habits/:id/stats`
+**Endpoint:** `DELETE /api/habits/:id`
 
 **Response (200 OK):**
 ```json
 {
   "success": true,
-  "data": {
-    "daysSinceLastRelapse": 15,
-    "currentStreak": 15,
-    "highestStreak": 30
-  }
+  "message": "Habit deleted"
 }
 ```
 
@@ -1130,31 +1103,24 @@ export default router;
 [`src/routes/habit.routes.ts`](src/routes/habit.routes.ts)
 ```typescript
 import { Router } from "express";
-import { 
-  createHabit, 
-  getDashboard, 
-  logActivity, 
-  handleRelapse,
-  getQuitStats 
-} from "../controllers/habit.controller.js";
+import * as ctrl from "../controllers/habit.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
+import { HabitValidationSchema } from "../schemas/habit.schema.js";
 
 const router = Router();
 router.use(protect);
 
 router.route("/")
-  .get(getDashboard)
-  .post(validate(HabitValidationSchema), createHabit);
+  .get(ctrl.getDashboard)
+  .post(validate(HabitValidationSchema), ctrl.createHabit);
 
-router.route("/log")
-  .post(validate(LogValidationSchema), logActivity);
+router.route("/toggle")
+  .post(ctrl.toggleDay);
 
-router.route("/:id/relapse")
-  .patch(handleRelapse);
-
-router.route("/:id/stats")
-  .get(getQuitStats);
+router.route("/:id")
+  .patch(ctrl.updateHabit)
+  .delete(ctrl.deleteHabit);
 
 export default router;
 ```
@@ -1279,20 +1245,20 @@ export default new TaskService();
 [`src/services/habit.service.ts`](src/services/habit.service.ts)
 ```typescript
 class HabitService {
-  async createHabit(userId: string, data: HabitInput) {
+  async createHabit(userId: string, data: any) {
     return await Habit.create({ ...data, userId });
   }
 
-  async getHabitProgress(userId: string) {
-    // Aggregation logic for progress and streaks
+  async getWeeklySheet(userId: string) {
+    // Generates the Weekly Table Data and progress
   }
 
-  async logActivity(userId: string, data: LogInput) {
-    // Logging logic with points calculation
+  async toggleDay(userId: string, habitId: string, date: string) {
+    // Toggles a log for the specific day
   }
 
-  async handleRelapse(userId: string, habitId: string) {
-    // Reset streak logic
+  async deleteHabit(userId: string, habitId: string) {
+    // Deletes habit and associated logs
   }
 }
 ```

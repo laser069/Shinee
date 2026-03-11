@@ -15,24 +15,22 @@ export interface CreateHabitPayload {
     targetValue: number;
     unit?: string;
     frequency: 'daily' | 'weekly';
+    scheduledDays?: number[]; // [1, 2, 3, 4, 5] for Mon-Fri
   };
   gamification?: {
     basePoints: number;
   };
 }
 
-export interface LogActivityPayload {
+export interface ToggleDayPayload {
   habitId: string;
-  value: number;
-  date?: string;
-  note?: string;
+  date: string;
 }
 
 const HABIT_ENDPOINTS = {
   BASE: '/habits',
-  LOG: '/habits/log',
-  RELAPSE: (id: string) => `/habits/${id}/relapse`,
-  STATS: (id: string) => `/habits/${id}/stats`,
+  TOGGLE: '/habits/toggle',
+  BY_ID: (id: string) => `/habits/${id}`,
 };
 
 export const getHabitsDashboard = async (): Promise<Habit[]> => {
@@ -45,27 +43,20 @@ export const createHabit = async (payload: CreateHabitPayload): Promise<Habit> =
   return response.data.data;
 };
 
-export const logActivity = async (payload: LogActivityPayload): Promise<HabitLog> => {
-  const response = await apiClient.post<{ success: boolean, data: HabitLog }>(HABIT_ENDPOINTS.LOG, payload);
+export const toggleDay = async (payload: ToggleDayPayload): Promise<{ status: string }> => {
+  const response = await apiClient.post<{ success: boolean, data: { status: string } }>(HABIT_ENDPOINTS.TOGGLE, payload);
   return response.data.data;
 };
 
-export const handleRelapse = async (id: string): Promise<Habit> => {
-  const response = await apiClient.patch<{ success: boolean, data: Habit }>(HABIT_ENDPOINTS.RELAPSE(id));
-  return response.data.data;
-};
-
-export const getHabitStats = async (id: string): Promise<HabitStats> => {
-  const response = await apiClient.get<{ success: boolean, data: HabitStats }>(HABIT_ENDPOINTS.STATS(id));
-  return response.data.data;
+export const deleteHabit = async (id: string): Promise<void> => {
+  await apiClient.delete(HABIT_ENDPOINTS.BY_ID(id));
 };
 
 const habitService = {
   getHabitsDashboard,
   createHabit,
-  logActivity,
-  handleRelapse,
-  getHabitStats,
+  toggleDay,
+  deleteHabit
 };
 
 export default habitService;

@@ -59,6 +59,7 @@ export interface HabitGoal {
   targetValue: number;
   unit?: string;
   frequency: 'daily' | 'weekly';
+  scheduledDays: number[];
 }
 
 export interface HabitGamification {
@@ -78,8 +79,8 @@ export interface Habit {
   gamification: HabitGamification;
   createdAt: string;
   updatedAt: string;
-  progress?: number; // Calculated field from backend
-  isCompletedToday?: boolean; // Calculated field from backend
+  grid?: { date: string; isCompleted: boolean; isScheduled: boolean }[];
+  weeklyProgress?: number;
 }
 
 export interface HabitLog {

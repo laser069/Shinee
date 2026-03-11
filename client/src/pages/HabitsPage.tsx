@@ -1,17 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import habitService from '../services/habitService';
 import { HabitModal } from '../components/HabitModal';
+import { WeeklyHabitTracker } from '../components/WeeklyHabitTracker';
 import type { Habit } from '../types/api';
 import { 
   Activity, 
   Flame, 
   Plus, 
-  Trophy, 
-  CheckCircle2, 
-  Circle, 
-  TrendingUp,
-  AlertTriangle,
-  History
+  Trophy 
 } from 'lucide-react';
 
 const HabitsPage: React.FC = () => {
@@ -35,22 +31,42 @@ const HabitsPage: React.FC = () => {
     }
   };
 
-  const handleLogActivity = async (habitId: string, value: number) => {
+  const handleToggle = async (habitId: string, date: string) => {
     try {
-      await habitService.logActivity({ habitId, value });
-      fetchHabits(); // Refresh dashboard
+      // Optimistically update the UI to make the interaction snappy
+      setHabits(prev => prev.map(h => {
+        if (h._id === habitId && h.grid) {
+          return {
+            ...h,
+            grid: h.grid.map(g => {
+              if (g.date === date) {
+                return { ...g, isCompleted: !g.isCompleted };
+              }
+              return g;
+            })
+          };
+        }
+        return h;
+      }));
+      
+      await habitService.toggleDay({ habitId, date });
+      // We could fetchHabits() here, but optimistic update is usually enough
+      // To be safe and update weekly progress calculation, let's re-fetch
+      await fetchHabits();
     } catch (err) {
       alert("Failed to log activity");
+      // Revert in case of failure
+      await fetchHabits();
     }
   };
 
-  const handleRelapse = async (habitId: string) => {
-    if (!window.confirm("Are you sure you want to log a relapse? This will reset your streak.")) return;
+  const handleDelete = async (habitId: string) => {
+    if (!window.confirm("Are you sure you want to delete this habit? All log history will be lost.")) return;
     try {
-      await habitService.handleRelapse(habitId);
-      fetchHabits();
+      await habitService.deleteHabit(habitId);
+      await fetchHabits();
     } catch (err) {
-      alert("Failed to record relapse");
+      alert("Failed to delete habit");
     }
   };
 
@@ -98,7 +114,7 @@ const HabitsPage: React.FC = () => {
             <h3 className="text-slate-400 font-bold uppercase text-xs tracking-widest">Best Streak</h3>
           </div>
           <p className="text-4xl font-black text-white">
-            {habits.length > 0 ? Math.max(...habits.map(h => h.gamification.highestStreak)) : 0} days
+            {habits.length > 0 ? Math.max(...habits.map(h => h.gamification.highestStreak || 0)) : 0} days
           </p>
         </div>
         <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl backdrop-blur-sm">
@@ -113,7 +129,7 @@ const HabitsPage: React.FC = () => {
       </div>
 
       {/* Habits Grid */}
-      <div className="grid grid-cols-1 gap-6 px-4 md:px-0">
+      <div className="px-4 md:px-0 pb-20">
         {habits.length === 0 ? (
           <div className="bg-slate-800/20 border-2 border-dashed border-slate-700/50 p-20 rounded-3xl text-center">
             <div className="bg-slate-800 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
@@ -129,89 +145,11 @@ const HabitsPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          habits.map(habit => (
-            <div 
-              key={habit._id} 
-              className="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-indigo-500/30 transition-all group flex flex-col md:flex-row md:items-center gap-8 backdrop-blur-sm"
-            >
-              {/* Habit Brief */}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
-                    habit.category === 'Health' ? 'bg-blue-500/20 text-blue-400' :
-                    habit.category === 'Quit' ? 'bg-red-500/20 text-red-400' :
-                    habit.category === 'Growth' ? 'bg-purple-500/20 text-purple-400' :
-                    'bg-slate-500/20 text-slate-400'
-                  }`}>
-                    {habit.category}
-                  </span>
-                  <div className="flex items-center gap-1.5 text-orange-400 font-bold text-sm">
-                    <Flame className="w-4 h-4 fill-orange-400" />
-                    {habit.gamification.currentStreak} day streak
-                  </div>
-                </div>
-                <h2 className="text-3xl font-black text-white mb-2 group-hover:text-indigo-400 transition-colors uppercase tracking-tight">
-                  {habit.name}
-                </h2>
-                <div className="flex items-center gap-6 text-slate-400 text-sm font-medium">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    Target: {habit.goal.targetValue} {habit.goal.unit} / {habit.goal.frequency}
-                  </div>
-                </div>
-              </div>
-
-              {/* Progress Section */}
-              <div className="md:w-64 flex flex-col gap-3">
-                <div className="flex justify-between items-end mb-1">
-                  <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Progress</span>
-                  <span className="text-white font-black">{Math.round((habit.progress || 0) * 100)}%</span>
-                </div>
-                <div className="h-4 bg-slate-900 rounded-full overflow-hidden border border-slate-700">
-                  <div 
-                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-1000"
-                    style={{ width: `${Math.min((habit.progress || 0) * 100, 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                {habit.category === 'Quit' ? (
-                  <button 
-                    onClick={() => handleRelapse(habit._id)}
-                    className="p-4 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl hover:bg-red-500 hover:text-white transition-all group flex items-center gap-2"
-                    title="Log Relapse"
-                  >
-                    <AlertTriangle className="w-6 h-6" />
-                    <span className="font-bold sm:hidden">Relapse</span>
-                  </button>
-                ) : (
-                  <button 
-                    disabled={habit.isCompletedToday}
-                    onClick={() => handleLogActivity(habit._id, habit.goal.targetValue)}
-                    className={`p-4 rounded-2xl transition-all flex items-center gap-2 active:scale-90 ${
-                      habit.isCompletedToday 
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default' 
-                      : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-500'
-                    }`}
-                  >
-                    {habit.isCompletedToday ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
-                    <span className="font-black uppercase text-sm tracking-wide">
-                      {habit.isCompletedToday ? 'Done Today' : 'Mark Done'}
-                    </span>
-                  </button>
-                )}
-                
-                <button 
-                  className="p-4 bg-slate-800 text-slate-300 border border-slate-700 rounded-2xl hover:bg-slate-700 transition-all"
-                  title="View History"
-                >
-                  <History className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
-          ))
+          <WeeklyHabitTracker 
+            habits={habits}
+            onToggle={handleToggle}
+            onDelete={handleDelete}
+          />
         )}
       </div>
 
