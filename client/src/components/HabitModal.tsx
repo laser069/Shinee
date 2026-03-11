@@ -1,20 +1,31 @@
 import React, { useState } from 'react';
 import habitService from '../services/habitService';
-import type { HabitCategory, HabitTrackingType } from '../types/api';
+import type { HabitCategory } from '../types/api';
 
 interface HabitModalProps {
   onClose: () => void;
   onSuccess: () => void;
 }
 
+const COLORS = ['indigo', 'rose', 'emerald', 'amber', 'blue', 'purple'];
+const ICONS = ['🎯', '💧', '📚', '🧘', '🏃', '🥗', '💻', '💤', '💰', '🧠'];
+
 export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) => {
   const [name, setName] = useState('');
   const [category, setCategory] = useState<HabitCategory>('Growth');
-  const [trackingType, setTrackingType] = useState<HabitTrackingType>('binary');
+  const [icon, setIcon] = useState('🎯');
+  const [color, setColor] = useState('indigo');
   const [targetValue, setTargetValue] = useState(1);
-  const [unit, setUnit] = useState('');
-  const [frequency, setFrequency] = useState<'daily' | 'weekly'>('daily');
+  const [weeklyTarget, setWeeklyTarget] = useState(5);
+  const [unit, setUnit] = useState('times');
+  const [scheduledDays, setScheduledDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon-Fri
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const toggleDay = (day: number) => {
+    setScheduledDays(prev => 
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day].sort()
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,13 +34,17 @@ export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) =>
       await habitService.createHabit({
         name,
         category,
-        trackingType,
+        ui: { icon, color },
         goal: {
+          type: 'boolean',
           targetValue,
           unit,
-          frequency
+          frequency: 'daily',
+          scheduledDays,
+          weeklyTarget,
+          difficulty: 'medium'
         }
-      });
+      } as any);
       onSuccess();
       onClose();
     } catch (err) {
@@ -41,109 +56,137 @@ export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) =>
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-[#1e293b] border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 animate-in zoom-in duration-200">
-        <header className="flex justify-between items-center mb-6">
+      <div className="bg-[#1e293b] border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 animate-in zoom-in duration-200 overflow-y-auto max-h-[90vh]">
+        <header className="flex justify-between items-center mb-6 sticky top-0 bg-[#1e293b] py-2 z-10">
           <h2 className="text-2xl font-bold text-white tracking-tight">New Habit</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             ✕
           </button>
         </header>
         
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Name & Icon */}
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Habit Name</label>
+              <input 
+                required
+                placeholder="e.g., Drink Water"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="w-20">
+              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Icon</label>
+              <select 
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer text-xl"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+              >
+                {ICONS.map(i => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Color Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Habit Name</label>
-            <input 
-              required
-              placeholder="e.g., Drink Water, Read Books"
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Category</label>
-              <select 
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
-                value={category}
-                onChange={(e) => setCategory(e.target.value as HabitCategory)}
-              >
-                <option value="Health">💪 Health</option>
-                <option value="Growth">🧠 Growth</option>
-                <option value="Quit">🚫 Quit (Sobriety)</option>
-                <option value="Social">🤝 Social</option>
-                <option value="Milestone">🎯 Milestone</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Tracking Type</label>
-              <select 
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
-                value={trackingType}
-                onChange={(e) => setTrackingType(e.target.value as HabitTrackingType)}
-              >
-                <option value="binary">Yes / No</option>
-                <option value="numeric">Quantity / Numeric</option>
-                <option value="countdown">Countdown</option>
-              </select>
+            <label className="block text-sm font-medium text-slate-400 mb-2 ml-1">Color Theme</label>
+            <div className="flex gap-3">
+              {COLORS.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className={`w-8 h-8 rounded-full border-2 transition-all ${
+                    color === c ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
+                  } ${
+                    c === 'indigo' ? 'bg-indigo-500' :
+                    c === 'rose' ? 'bg-rose-500' :
+                    c === 'emerald' ? 'bg-emerald-500' :
+                    c === 'amber' ? 'bg-amber-500' :
+                    c === 'blue' ? 'bg-blue-500' :
+                    'bg-purple-500'
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Target Value</label>
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Category</label>
+            <select 
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as HabitCategory)}
+            >
+              <option value="Health">💪 Health</option>
+              <option value="Growth">🧠 Growth</option>
+              <option value="Quit">🚫 Quit</option>
+              <option value="Social">🤝 Social</option>
+              <option value="Finance">💰 Finance</option>
+              <option value="Mind">🧘 Mind</option>
+            </select>
+          </div>
+
+          {/* Scheduling */}
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-2 ml-1">Scheduled Days</label>
+            <div className="flex justify-between gap-1">
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => toggleDay(idx)}
+                  className={`w-9 h-9 rounded-lg font-bold transition-all text-xs border ${
+                    scheduledDays.includes(idx)
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-md'
+                      : 'bg-slate-900 border-slate-700 text-slate-500 hover:border-slate-500'
+                  }`}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Target Value</label>
+              <input 
+                type="number"
+                min="1"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                value={targetValue}
+                onChange={(e) => setTargetValue(Number(e.target.value))}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Weekly Target</label>
+              <div className="flex items-center gap-2">
                 <input 
                   type="number"
                   min="1"
-                  required
+                  max="7"
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  value={targetValue}
-                  onChange={(e) => setTargetValue(Number(e.target.value))}
+                  value={weeklyTarget}
+                  onChange={(e) => setWeeklyTarget(Number(e.target.value))}
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Unit (optional)</label>
-                <input 
-                  placeholder="steps, pages, etc."
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                />
-              </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Frequency</label>
-            <div className="flex gap-2">
-              <button 
-                type="button"
-                onClick={() => setFrequency('daily')}
-                className={`flex-1 py-3 rounded-xl font-bold transition-all ${
-                  frequency === 'daily' 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
-                    : 'bg-slate-900 text-slate-400 border border-slate-700 hover:bg-slate-800'
-                }`}
-              >
-                Daily
-              </button>
-              <button 
-                type="button"
-                onClick={() => setFrequency('weekly')}
-                className={`flex-1 py-3 rounded-xl font-bold transition-all ${
-                  frequency === 'weekly' 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
-                    : 'bg-slate-900 text-slate-400 border border-slate-700 hover:bg-slate-800'
-                }`}
-              >
-                Weekly
-              </button>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Unit</label>
+              <input 
+                placeholder="times, ml, etc."
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+              />
             </div>
           </div>
 
-          <div className="flex gap-3 mt-8">
+          <div className="flex gap-3 pt-4">
             <button 
               type="button" 
               onClick={onClose}

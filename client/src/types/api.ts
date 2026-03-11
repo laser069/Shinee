@@ -56,10 +56,13 @@ export type HabitCategory = 'Health' | 'Growth' | 'Quit' | 'Social' | 'Milestone
 export type HabitTrackingType = 'numeric' | 'binary' | 'countdown';
 
 export interface HabitGoal {
+  type: 'boolean' | 'numeric';
   targetValue: number;
-  unit?: string;
+  unit: string;
   frequency: 'daily' | 'weekly';
   scheduledDays: number[];
+  weeklyTarget: number;
+  difficulty: 'easy' | 'medium' | 'hard';
 }
 
 export interface HabitGamification {
@@ -67,14 +70,20 @@ export interface HabitGamification {
   currentStreak: number;
   highestStreak: number;
   lastRelapseDate?: string;
+  totalXP?: number;
+  multiplier?: number;
 }
 
 export interface Habit {
   _id: string;
   userId: string;
   name: string;
+  description?: string;
   category: HabitCategory;
-  trackingType: HabitTrackingType;
+  ui: {
+    icon: string;
+    color: string;
+  };
   goal: HabitGoal;
   gamification: HabitGamification;
   createdAt: string;

@@ -649,7 +649,12 @@ Authorization: Bearer <token>
       "_id": "60d5f1f77bcf86cd799439014",
       "name": "Drink Water",
       "category": "Health",
+      "ui": {
+        "icon": "💧",
+        "color": "blue"
+      },
       "goal": {
+        "weeklyTarget": 5,
         "scheduledDays": [1, 2, 3, 4, 5]
       },
       "grid": [
@@ -804,26 +809,24 @@ export default mongoose.model('Task',taskSchema);
 const HabitSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
-  category: { 
-    type: String, 
-    enum: ['Health', 'Growth', 'Quit', 'Social', 'Milestone'], 
-    required: true 
-  },
-  trackingType: {
-    type: String,
-    enum: ['numeric', 'binary', 'countdown'],
-    required: true
+  category: { type: String, default: 'Growth' },
+  ui: {
+    icon: { type: String, default: '🎯' },
+    color: { type: String, default: 'indigo' }
   },
   goal: {
-    targetValue: { type: Number, default: 1 }, 
-    unit: { type: String },
-    frequency: { type: String, enum: ['daily', 'weekly'], default: 'daily' }
+    type: { type: String, enum: ['boolean', 'numeric'], default: 'boolean' },
+    targetValue: { type: Number, default: 1 },
+    unit: { type: String, default: 'times' },
+    frequency: { type: String, enum: ['daily', 'weekly'], default: 'daily' },
+    scheduledDays: { type: [Number], default: [] },
+    weeklyTarget: { type: Number, default: 0 },
+    difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'medium' }
   },
-  gamification: {
-    basePoints: { type: Number, default: 10 },
+  stats: {
     currentStreak: { type: Number, default: 0 },
-    highestStreak: { type: Number, default: 0 },
-    lastRelapseDate: { type: Date, default: Date.now }
+    bestStreak: { type: Number, default: 0 },
+    totalXP: { type: Number, default: 0 }
   }
 }, { timestamps: true });
 ```
@@ -926,17 +929,21 @@ export type CreateTaskPayload = z.infer<typeof CreateTaskSchema>;
 [`src/schemas/habit.schema.ts`](src/schemas/habit.schema.ts)
 ```typescript
 export const HabitValidationSchema = z.object({
-  name: z.string().min(2).max(50),
-  category: z.enum(['Health', 'Growth', 'Quit', 'Social', 'Milestone']),
-  trackingType: z.enum(['numeric', 'binary', 'countdown']),
-  goal: z.object({
-    targetValue: z.number().positive().default(1),
-    unit: z.string().optional(),
-    frequency: z.enum(['daily', 'weekly']).default('daily'),
+  name: z.string().min(1),
+  category: z.enum(['Health', 'Growth', 'Quit', 'Social', 'Finance', 'Mind']),
+  ui: z.object({
+    icon: z.string().default('🎯'),
+    color: z.string().default('indigo')
   }),
-  gamification: z.object({
-    basePoints: z.number().min(0).default(10),
-  }).optional(),
+  goal: z.object({
+    type: z.enum(['boolean', 'numeric']),
+    targetValue: z.number().min(1),
+    unit: z.string(),
+    frequency: z.enum(['daily', 'weekly']),
+    scheduledDays: z.array(z.number()),
+    weeklyTarget: z.number().optional(),
+    difficulty: z.enum(['easy', 'medium', 'hard'])
+  })
 });
 
 export const LogValidationSchema = z.object({

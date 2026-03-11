@@ -4,10 +4,9 @@ import { HabitModal } from '../components/HabitModal';
 import { WeeklyHabitTracker } from '../components/WeeklyHabitTracker';
 import type { Habit } from '../types/api';
 import { 
-  Activity, 
-  Flame, 
   Plus, 
-  Trophy 
+  Settings,
+  MoreHorizontal
 } from 'lucide-react';
 
 const HabitsPage: React.FC = () => {
@@ -33,124 +32,117 @@ const HabitsPage: React.FC = () => {
 
   const handleToggle = async (habitId: string, date: string) => {
     try {
-      // Optimistically update the UI to make the interaction snappy
+      // Optimistic Update
       setHabits(prev => prev.map(h => {
         if (h._id === habitId && h.grid) {
-          return {
-            ...h,
-            grid: h.grid.map(g => {
-              if (g.date === date) {
-                return { ...g, isCompleted: !g.isCompleted };
-              }
-              return g;
-            })
-          };
+          const newGrid = h.grid.map(g => g.date === date ? { ...g, isCompleted: !g.isCompleted } : g);
+          const completedCount = newGrid.filter(g => g.isCompleted).length;
+          const scheduledCount = h.goal.scheduledDays.length || 1;
+          const progress = Math.min(Math.round((completedCount / scheduledCount) * 100), 100);
+          return { ...h, grid: newGrid, weeklyProgress: progress };
         }
         return h;
       }));
       
       await habitService.toggleDay({ habitId, date });
-      // We could fetchHabits() here, but optimistic update is usually enough
-      // To be safe and update weekly progress calculation, let's re-fetch
+      // Final sync
       await fetchHabits();
     } catch (err) {
-      alert("Failed to log activity");
-      // Revert in case of failure
+      console.error(err);
       await fetchHabits();
     }
   };
 
   const handleDelete = async (habitId: string) => {
-    if (!window.confirm("Are you sure you want to delete this habit? All log history will be lost.")) return;
+    if (!window.confirm("Delete this habit forever?")) return;
     try {
       await habitService.deleteHabit(habitId);
       await fetchHabits();
     } catch (err) {
-      alert("Failed to delete habit");
+      alert("Delete failed");
     }
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
-        <p className="text-xl font-medium">Loading habits...</p>
+      <div className="flex h-[80vh] items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-gray-100 border-t-indigo-500 rounded-full animate-spin" />
+          <span className="text-sm font-medium text-gray-400">Loading your habits...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-8">
-      <header className="flex justify-between items-center mb-10 px-4 md:px-0">
-        <div>
-          <h1 className="text-4xl font-black text-white tracking-tight">HABIT TRACKER</h1>
-          <p className="text-slate-400 text-lg mt-1 font-medium">Small wins lead to big changes.</p>
-        </div>
-        <button 
-          onClick={() => setIsModalOpen(true)} 
-          className="bg-indigo-600 hover:bg-indigo-500 transition-all px-8 py-4 rounded-2xl font-bold text-white shadow-xl shadow-indigo-600/30 flex items-center gap-3 group active:scale-95"
-        >
-          <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
-          <span className="hidden md:inline">Track New Habit</span>
-        </button>
-      </header>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 px-4 md:px-0">
-        <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl backdrop-blur-sm">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="bg-indigo-500/20 p-3 rounded-2xl text-indigo-400">
-              <Activity className="w-6 h-6" />
+    <div className="min-h-screen bg-gray-50/30 font-sans selection:bg-indigo-100 selection:text-indigo-900 pb-20">
+      <div className="max-w-6xl mx-auto pt-12 px-6">
+        {/* Notion-style Header */}
+        <header className="mb-8 group">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4 text-gray-300 opacity-60 group-hover:opacity-100 transition-opacity">
+               <div className="p-1 hover:bg-gray-100 rounded cursor-pointer"><Settings className="w-5 h-5" /></div>
+               <div className="p-1 hover:bg-gray-100 rounded cursor-pointer"><MoreHorizontal className="w-5 h-5" /></div>
             </div>
-            <h3 className="text-slate-400 font-bold uppercase text-xs tracking-widest">Active habits</h3>
-          </div>
-          <p className="text-4xl font-black text-white">{habits.length}</p>
-        </div>
-        <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl backdrop-blur-sm">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="bg-orange-500/20 p-3 rounded-2xl text-orange-400">
-              <Flame className="w-6 h-6" />
-            </div>
-            <h3 className="text-slate-400 font-bold uppercase text-xs tracking-widest">Best Streak</h3>
-          </div>
-          <p className="text-4xl font-black text-white">
-            {habits.length > 0 ? Math.max(...habits.map(h => h.gamification.highestStreak || 0)) : 0} days
-          </p>
-        </div>
-        <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl backdrop-blur-sm">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="bg-emerald-500/20 p-3 rounded-2xl text-emerald-400">
-              <Trophy className="w-6 h-6" />
-            </div>
-            <h3 className="text-slate-400 font-bold uppercase text-xs tracking-widest">Points Today</h3>
-          </div>
-          <p className="text-4xl font-black text-white">Coming Soon</p>
-        </div>
-      </div>
-
-      {/* Habits Grid */}
-      <div className="px-4 md:px-0 pb-20">
-        {habits.length === 0 ? (
-          <div className="bg-slate-800/20 border-2 border-dashed border-slate-700/50 p-20 rounded-3xl text-center">
-            <div className="bg-slate-800 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-              <Plus className="w-10 h-10 text-slate-500" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">No habits tracked yet</h2>
-            <p className="text-slate-400 mb-8 max-w-sm mx-auto">Start your journey by adding your first habit. Discipline is built one day at a time.</p>
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-500 transition-all"
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold rounded shadow-sm transition-all flex items-center gap-2"
             >
-              Add First Habit
+              <Plus className="w-4 h-4" />
+              New Habit
             </button>
           </div>
-        ) : (
-          <WeeklyHabitTracker 
-            habits={habits}
-            onToggle={handleToggle}
-            onDelete={handleDelete}
-          />
-        )}
+          
+          <div className="flex items-center gap-3">
+            <div className="text-4xl">📔</div>
+            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Weekly Habit Tracker</h1>
+          </div>
+          <p className="mt-2 text-gray-500 font-medium text-[15px] border-b border-gray-200 pb-4">
+            Track your daily discipline and monitor weekly progress at a glance.
+          </p>
+        </header>
+
+        {/* The Tracker Component */}
+        <div className="mt-6">
+          {habits.length === 0 ? (
+            <div className="bg-white border-2 border-dashed border-gray-200 py-20 rounded-lg text-center">
+               <div className="text-4xl mb-4 text-gray-300">🍃</div>
+               <h3 className="text-lg font-semibold text-gray-700">No habits yet</h3>
+               <p className="text-gray-400 text-sm mb-6">Click "New Habit" to start tracking your journey.</p>
+               <button 
+                 onClick={() => setIsModalOpen(true)}
+                 className="text-indigo-600 font-bold hover:underline"
+               >
+                 Create your first habit
+               </button>
+            </div>
+          ) : (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <WeeklyHabitTracker 
+                habits={habits}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Legend / Footer */}
+        <footer className="mt-8 flex items-center justify-between text-[12px] text-gray-400">
+           <div className="flex gap-4">
+             <div className="flex items-center gap-1.5">
+               <div className="w-2 h-2 rounded-full bg-indigo-500" />
+               <span>In Progress</span>
+             </div>
+             <div className="flex items-center gap-1.5">
+               <div className="w-2 h-2 rounded-full bg-emerald-500" />
+               <span>Completed</span>
+             </div>
+           </div>
+           <div>
+             Last updated: {new Date().toLocaleDateString()}
+           </div>
+        </footer>
       </div>
 
       {isModalOpen && (

@@ -1,42 +1,81 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+// models/Habit.ts
+
 export interface IHabit extends Document {
   userId: mongoose.Types.ObjectId;
   name: string;
-  category: 'Health' | 'Growth' | 'Quit' | 'Social';
-  goal: {
-    targetValue: number; // e.g., 1 (for a checkbox) or 500 (for ml of water)
-    unit: string;        // e.g., "session", "ml", "pages"
-    frequency: 'daily' | 'weekly';
-    scheduledDays: number[]; // [1, 3, 5] where 1=Mon, 0=Sun
+  description?: string;
+  category: 'Health' | 'Growth' | 'Quit' | 'Social' | 'Finance' | 'Mind';
+  isArchived: boolean;
+  ui: {
+    icon: string;
+    color: string;
   };
-  gamification: {
-    basePoints: number;
-    lastRelapseDate: Date;
+  goal: {
+    type: 'boolean' | 'numeric';
+    targetValue: number;
+    unit: string;
+    frequency: 'daily' | 'weekly';
+    scheduledDays: number[];
+    weeklyTarget: number;
+    difficulty: 'easy' | 'medium' | 'hard';
+  };
+  reminders: {
+    enabled: boolean;
+    time: string;
+  };
+  // UPDATE THIS SECTION
+  stats: {
+    currentStreak: number;
+    bestStreak: number;
+    totalCompletions: number;
+    lastCompletedDate?: Date;
+    totalXP: number;      // <--- Add this
+    multiplier: number;   // <--- Add this
   };
 }
 
 const HabitSchema = new Schema<IHabit>({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  name: { type: String, required: true },
-  category: { type: String, enum: ['Health', 'Growth', 'Quit', 'Social'], default: 'Growth' },
+  name: { type: String, required: true, trim: true },
+  description: { type: String },
+  category: { type: String, default: 'Growth' },
+  isArchived: { type: Boolean, default: false },
+  ui: {
+    icon: { type: String, default: '🎯' },
+    color: { type: String, default: 'indigo' }
+  },
   goal: {
+    type: { type: String, enum: ['boolean', 'numeric'], default: 'boolean' },
     targetValue: { type: Number, default: 1 },
     unit: { type: String, default: 'times' },
     frequency: { type: String, enum: ['daily', 'weekly'], default: 'daily' },
-    scheduledDays: { type: [Number], default: [1, 2, 3, 4, 5] } // Default Mon-Fri
+    scheduledDays: { type: [Number], default: [] },
+    weeklyTarget: { type: Number, default: 0 },
+    difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'medium' }
   },
-  gamification: {
-    basePoints: { type: Number, default: 10 },
-    lastRelapseDate: { type: Date, default: Date.now }
+  reminders: {
+    enabled: { type: Boolean, default: false },
+    time: { type: String }
+  },
+  // Add this to your Habit Schema stats
+  stats: {
+    currentStreak: { type: Number, default: 0 },
+    bestStreak: { type: Number, default: 0 },
+    totalXP: { type: Number, default: 0 },
+    multiplier: { type: Number, default: 1.0 } // 1.0x, 1.2x, 1.5x etc.
   }
 }, { timestamps: true });
 
+// ENHANCED LOG: Added "Notes" for the daily reflection
 const LogSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   habitId: { type: Schema.Types.ObjectId, ref: 'Habit', required: true },
-  date: { type: Date, required: true }, // Normalized to 00:00:00
+  date: { type: Date, required: true },
   value: { type: Number, required: true },
+  note: { type: String }, // "Felt great today!", "Hard to start but finished"
+  mood: { type: Number, min: 1, max: 5 }, // 1-5 star mood rating
   pointsEarned: { type: Number, default: 0 }
 });
 

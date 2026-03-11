@@ -1,25 +1,24 @@
 import { z } from "zod";
 
 export const HabitValidationSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  category: z.enum(['Health', 'Growth', 'Quit', 'Social']),
-  goal: z.object({
-    targetValue: z.number().min(1).default(1),
-    unit: z.string().default('times'),
-    frequency: z.enum(['daily', 'weekly']).default('daily'),
-    scheduledDays: z.array(z.number().min(0).max(6)).default([1, 2, 3, 4, 5]),
+  name: z.string().min(1, "Habit name is required"),
+  description: z.string().optional(),
+  category: z.enum(['Health', 'Growth', 'Quit', 'Social', 'Finance', 'Mind']),
+  ui: z.object({
+    icon: z.string().default('🎯'),
+    color: z.string().default('indigo')
   }),
-  gamification: z.object({
-    basePoints: z.number().default(10),
-  }).optional(),
+  goal: z.object({
+    type: z.enum(['boolean', 'numeric']),
+    targetValue: z.number().min(1),
+    unit: z.string(),
+    frequency: z.enum(['daily', 'weekly']),
+    scheduledDays: z.array(z.number()).max(7),
+    weeklyTarget: z.number().max(7).optional(),
+    difficulty: z.enum(['easy', 'medium', 'hard'])
+  }),
+  reminders: z.object({
+    enabled: z.boolean().default(false),
+    time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format").optional()
+  }).optional()
 });
-
-// For partial updates (Editing)
-export const HabitUpdateSchema = HabitValidationSchema.partial();
-
-export const ToggleValidationSchema = z.object({
-  habitId: z.string(),
-  date: z.string(), // ISO String from frontend
-});
-
-export type HabitInput = z.infer<typeof HabitValidationSchema>;

@@ -11,10 +11,12 @@ NEXUS is a premium, high-performance task management and habit tracking applicat
 - Per-column vertical scrolling for high-density task management.
 
 ### 🎯 Habit Tracker
-- **Smart Progress Tracking**: Supports binary (Yes/No), numeric (Quantity), and countdown tracking.
-- **Gamified Experience**: Real-time streak calculation and points system.
-- **Sobriety/Quit Support**: Specialized tools for reset tracking (e.g., quitting social media).
-- **History & Stats**: Detailed insights into your daily and weekly performance.
+- **Notion-Inspired Grid**: A professional, light-mode database view for your weekly routines.
+- **Smart Scheduling**: Customize which days a habit is active; visual indicators show scheduled vs unscheduled days.
+- **Interactive Toggling**: Click any day in the weekly grid to log progress with optimistic UI updates.
+- **Progress Formulas**: Automatic weekly completion calculation with real-time horizontal progress bars.
+- **Rich Personalization**: Custom icons (emojis) and color-coded categorisation for every habit.
+- **Sobriety/Quit Support**: Specialized tools for reset tracking and streak management.
 
 ### 🔒 Secure Infrastructure
 - **JWT Authentication**: Secure stateless login and session management.
