@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import habitService from '../services/habitService';
 import type { Habit, HabitCategory } from '../types/api';
 
@@ -135,7 +135,6 @@ export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose, onSucces
               <option value="Social">🤝 Social</option>
               <option value="Finance">💰 Finance</option>
               <option value="Mind">🧘 Mind</option>
-              <option value="Milestone">🎯 Milestone</option>
             </select>
           </div>
 

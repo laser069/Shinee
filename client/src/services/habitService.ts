@@ -1,22 +1,24 @@
 import apiClient from '../lib/apiClient';
 import type { 
   Habit, 
-  HabitCategory, 
-  HabitTrackingType 
+  HabitCategory,
 } from '../types/api';
 
 export interface CreateHabitPayload {
   name: string;
   category: HabitCategory;
-  trackingType: HabitTrackingType;
-  goal: {
-    targetValue: number;
-    unit?: string;
-    frequency: 'daily' | 'weekly';
-    scheduledDays?: number[]; // [1, 2, 3, 4, 5] for Mon-Fri
+  ui: {
+    icon: string;
+    color: string;
   };
-  gamification?: {
-    basePoints: number;
+  goal: {
+    type: 'boolean' | 'numeric';
+    targetValue: number;
+    unit: string;
+    frequency: 'daily' | 'weekly';
+    scheduledDays: number[];
+    weeklyTarget: number;
+    difficulty: 'easy' | 'medium' | 'hard';
   };
 }
 
@@ -27,12 +29,13 @@ export interface ToggleDayPayload {
 
 const HABIT_ENDPOINTS = {
   BASE: '/habits',
+  DASHBOARD: '/habits/dashboard',
   TOGGLE: '/habits/toggle',
   BY_ID: (id: string) => `/habits/${id}`,
 };
 
 export const getHabitsDashboard = async (): Promise<Habit[]> => {
-  const response = await apiClient.get<{ success: boolean, data: Habit[] }>(HABIT_ENDPOINTS.BASE);
+  const response = await apiClient.get<{ success: boolean, data: Habit[] }>(HABIT_ENDPOINTS.DASHBOARD);
   return response.data.data;
 };
 

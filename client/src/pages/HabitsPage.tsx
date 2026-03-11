@@ -17,15 +17,15 @@ const HabitsPage: React.FC = () => {
     fetchHabits();
   }, []);
 
-  const fetchHabits = async () => {
+  const fetchHabits = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const data = await habitService.getHabitsDashboard();
       setHabits(data);
     } catch (err) {
       console.error('Error fetching habits:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -44,11 +44,11 @@ const HabitsPage: React.FC = () => {
       }));
       
       await habitService.toggleDay({ habitId, date });
-      // Final sync for stats
-      await fetchHabits();
+      // Final sync for stats (Silent)
+      await fetchHabits(true);
     } catch (err) {
       console.error(err);
-      await fetchHabits();
+      await fetchHabits(true);
     }
   };
 
