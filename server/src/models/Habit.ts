@@ -1,68 +1,44 @@
-import mongoose from "mongoose";
-import { Document,Types } from "mongoose";
-// Define the nested structures
-interface IGamification {
-  basePoints: number;
-  currentStreak: number;
-  highestStreak: number;
-  lastRelapseDate: Date;
-}
+import mongoose, { Schema, Document } from "mongoose";
 
-interface IGoal {
-  targetValue: number;
-  unit?: string;
-  frequency: 'daily' | 'weekly';
-}
-
-// Define the full Habit Document
 export interface IHabit extends Document {
-  userId: Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   name: string;
-  category: 'Health' | 'Growth' | 'Quit' | 'Social' | 'Milestone';
-  trackingType: 'numeric' | 'binary' | 'countdown';
-  goal: IGoal;
-  gamification: IGamification; // No '?' means it's required
+  category: 'Health' | 'Growth' | 'Quit' | 'Social';
+  goal: {
+    targetValue: number; // e.g., 1 (for a checkbox) or 500 (for ml of water)
+    unit: string;        // e.g., "session", "ml", "pages"
+    frequency: 'daily' | 'weekly';
+    scheduledDays: number[]; // [1, 3, 5] where 1=Mon, 0=Sun
+  };
+  gamification: {
+    basePoints: number;
+    lastRelapseDate: Date;
+  };
 }
 
-// --- 1. THE LOG SCHEMA (The daily data) ---
-// Each time you walk, code, or call someone, a new entry is created here.
-const LogSchema = new mongoose.Schema({
-  habitId: { type: mongoose.Schema.Types.ObjectId, ref: 'Habit', required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  date: { type: Date, default: () => new Date().setHours(0,0,0,0) },
-  value: { type: Number, required: true }, // e.g., 8000 steps or 2 problems
-  pointsEarned: { type: Number, default: 0 },
-  multiplierAtTime: { type: Number, default: 1 }
-}, { timestamps: true });
-
-// --- 2. THE HABIT SCHEMA (The definition) ---
-// This stores WHAT you are tracking and your current streak/multipliers.
-const HabitSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+const HabitSchema = new Schema<IHabit>({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
-  category: { 
-    type: String, 
-    enum: ['Health', 'Growth', 'Quit', 'Social', 'Milestone'], 
-    required: true 
-  },
-  trackingType: {
-    type: String,
-    enum: ['numeric', 'binary', 'countdown'],
-    required: true
-  },
+  category: { type: String, enum: ['Health', 'Growth', 'Quit', 'Social'], default: 'Growth' },
   goal: {
-    targetValue: { type: Number, default: 1 }, 
-    unit: { type: String }, // "steps", "pages", etc.
-    frequency: { type: String, enum: ['daily', 'weekly'], default: 'daily' }
+    targetValue: { type: Number, default: 1 },
+    unit: { type: String, default: 'times' },
+    frequency: { type: String, enum: ['daily', 'weekly'], default: 'daily' },
+    scheduledDays: { type: [Number], default: [1, 2, 3, 4, 5] } // Default Mon-Fri
   },
   gamification: {
     basePoints: { type: Number, default: 10 },
-    currentStreak: { type: Number, default: 0 },
-    highestStreak: { type: Number, default: 0 },
-    lastRelapseDate: { type: Date, default: Date.now } // Specifically for 'Quit' category
+    lastRelapseDate: { type: Date, default: Date.now }
   }
 }, { timestamps: true });
 
-// Exporting both Models
-export const Habit = mongoose.model("Habit", HabitSchema);
-export const Log = mongoose.model("Log", LogSchema);
+const LogSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  habitId: { type: Schema.Types.ObjectId, ref: 'Habit', required: true },
+  date: { type: Date, required: true }, // Normalized to 00:00:00
+  value: { type: Number, required: true },
+  pointsEarned: { type: Number, default: 0 }
+});
+
+export const Habit = mongoose.model<IHabit>('Habit', HabitSchema);
+export const Log = mongoose.model('Log', LogSchema);

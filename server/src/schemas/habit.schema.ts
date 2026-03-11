@@ -1,31 +1,25 @@
 import { z } from "zod";
 
-// --- 1. HABIT VALIDATION ---
 export const HabitValidationSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters").max(50),
-  category: z.enum(['Health', 'Growth', 'Quit', 'Social', 'Milestone']),
-  trackingType: z.enum(['numeric', 'binary', 'countdown']),
-  
+  name: z.string().min(2, "Name is required"),
+  category: z.enum(['Health', 'Growth', 'Quit', 'Social']),
   goal: z.object({
-    targetValue: z.number().positive("Target must be greater than 0").default(1),
-    unit: z.string().optional(),
+    targetValue: z.number().min(1).default(1),
+    unit: z.string().default('times'),
     frequency: z.enum(['daily', 'weekly']).default('daily'),
+    scheduledDays: z.array(z.number().min(0).max(6)).default([1, 2, 3, 4, 5]),
   }),
-
   gamification: z.object({
-    basePoints: z.number().min(0).default(10),
-    // We usually don't let the user "set" their own streak via API for security
+    basePoints: z.number().default(10),
   }).optional(),
 });
 
-// --- 2. LOG VALIDATION ---
-export const LogValidationSchema = z.object({
-  habitId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Habit ID format"), // Validates MongoDB ObjectId
-  value: z.number().min(0, "Value cannot be negative"),
-  date: z.string().datetime().optional(), // ISO string date
-  note: z.string().max(200).optional(),
+// For partial updates (Editing)
+export const HabitUpdateSchema = HabitValidationSchema.partial();
+
+export const ToggleValidationSchema = z.object({
+  habitId: z.string(),
+  date: z.string(), // ISO String from frontend
 });
 
-// --- 3. TYPES (Optional but helpful if using TypeScript) ---
 export type HabitInput = z.infer<typeof HabitValidationSchema>;
-export type LogInput = z.infer<typeof LogValidationSchema>;
