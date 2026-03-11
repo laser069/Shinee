@@ -36,9 +36,9 @@ class TaskService {
 
   async deleteTask(taskId: string, userId: string) {
     const task = await Task.findOneAndDelete({ _id: taskId, user: userId });
-    if (task) {
-      // Clean up reference in any board
-      await Board.updateMany({}, { $pull: { tasks: taskId } });
+    if (task && task.boardId) {
+      // Clean up reference in the board
+      await Board.findByIdAndUpdate(task.boardId, { $pull: { tasks: taskId } });
     }
     return task;
   }

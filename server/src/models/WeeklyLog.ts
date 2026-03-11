@@ -24,13 +24,13 @@ const weeklyLogSchema = new Schema<IWeeklyLog>({
   weekStartDate: { type: Date, required: true },
 
   days: {
-    0: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Sun
-    1: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Mon
-    2: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Tue
-    3: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Wed
-    4: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Thu
-    5: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Fri
-    6: { completed: { type: Boolean, default: false }, syncedAt: Date }  // Sat
+    0: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Mon
+    1: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Tue
+    2: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Wed
+    3: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Thu
+    4: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Fri
+    5: { completed: { type: Boolean, default: false }, syncedAt: Date }, // Sat
+    6: { completed: { type: Boolean, default: false }, syncedAt: Date }  // Sun
   },
 
   stats: {

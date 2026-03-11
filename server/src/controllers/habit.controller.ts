@@ -1,6 +1,7 @@
 import { Response } from "express";
 import habitService from "../services/habit.service";
 import { AuthRequest } from "../middleware/auth.middleware";
+import dayjs from "dayjs";
 
 /**
  * GET /api/habits/dashboard
@@ -31,12 +32,25 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
 export const toggleActivity = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { habitId, date, value, note, mood } = req.body;
+    let { habitId, date, dayIndex, value, note, mood } = req.body;
 
-    if (!habitId || !date) {
+    if (!habitId) {
+      return res.status(400).json({ success: false, message: "Habit ID is required." });
+    }
+
+    // If dayIndex is provided but date is not, calculate the date for the current week
+    if (!date && dayIndex !== undefined) {
+      const now = dayjs();
+      const day = now.day(); // Sun=0, Mon=1...
+      const diff = (day === 0 ? -6 : 1 - day); // Monday of current week
+      const weekStart = now.add(diff, 'day').startOf('day');
+      date = weekStart.add(dayIndex, 'day').format('YYYY-MM-DD');
+    }
+
+    if (!date) {
       return res.status(400).json({
         success: false,
-        message: "Habit ID and Date are required for logging."
+        message: "Habit ID and Date (or dayIndex) are required for logging."
       });
     }
 
@@ -58,6 +72,7 @@ export const toggleActivity = async (req: AuthRequest, res: Response) => {
   }
 };
 
+
 /**
  * POST /api/habits
  * Create a new habit template (defines schedule, target, and UI)
@@ -72,6 +87,7 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
       data: habit
     });
   } catch (error: any) {
+    console.error("Create Habit Error:", error.message || error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
@@ -92,9 +108,11 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
       data: habit
     });
   } catch (error: any) {
+    console.error("Update Habit Error:", error.message || error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
 
 /**
  * PATCH /api/habits/:id/archive

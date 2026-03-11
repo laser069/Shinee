@@ -5,10 +5,16 @@ import { CreateHabitPayload } from '../schemas/habit.schema';
 import dayjs from 'dayjs';
 
 class HabitService {
-  private getStartOfWeek(): Date {
-    // Standardizing to Monday of the current week
-    return dayjs().startOf('week').add(1, 'day').toDate();
+  private calculateMonday(date: dayjs.Dayjs): Date {
+    const dayOfWeek = date.day();
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    return date.subtract(daysFromMonday, 'day').startOf('day').toDate();
   }
+
+  private getStartOfWeek(): Date {
+    return this.calculateMonday(dayjs());
+  }
+
 
   async createHabit(userId: string, data: CreateHabitPayload): Promise<IHabit> {
     const habit = await Habit.create({
@@ -67,12 +73,12 @@ class HabitService {
     if (!habit) throw new Error("Habit not found");
 
     const dateObj = dayjs(date);
-    const weekStart = dateObj.startOf('week').add(1, 'day').toDate(); // Monday start
+    const weekStart = this.calculateMonday(dateObj); // Monday start
     const dayIndex = (dateObj.day() + 6) % 7; // Convert Sun=0, Mon=1 to Mon=0, Sun=6
 
     let log: any = await WeeklyLog.findOne({ habitId, weekStartDate: weekStart });
     if (!log) {
-      log = await this.ensureWeeklyLog(habitId);
+      log = await this.ensureWeeklyLog(habitId, weekStart);
     }
 
     if (!log) throw new Error("Failed to find or create log for this week");
@@ -128,7 +134,7 @@ class HabitService {
     // Update the sub-document stats
     updatedLog.stats.timesCompleted = timesCompleted;
     updatedLog.stats.isGoalMet = isGoalMet;
-    updatedLog.stats.bonusAchieved = !isGoalMet && timesCompleted > habit.goalCount;
+    updatedLog.stats.bonusAchieved = isGoalMet && timesCompleted > habit.goalCount;
 
     await updatedLog.save();
 
@@ -144,7 +150,9 @@ class HabitService {
     const lastDate = habit.lastCompletedDate ? dayjs(habit.lastCompletedDate) : null;
 
     // Daily Streak Logic
-    if (lastDate && today.diff(lastDate, 'day') === 1) {
+    if (lastDate && today.diff(lastDate, 'day') === 0) {
+      // Already completed today, do nothing
+    } else if (lastDate && today.diff(lastDate, 'day') === 1) {
       habit.dailyStreak += 1;
     } else if (!lastDate || today.diff(lastDate, 'day') > 1) {
       // If it's been more than 1 day, the streak resets
@@ -160,22 +168,27 @@ class HabitService {
       habit.longestStreak = habit.dailyStreak;
     }
 
+    // Points Logic: 10 points * multiplier
+    const basePoints = 10;
+    const earnedPoints = Math.round(basePoints * habit.multiplier);
+    habit.totalPoints = (habit.totalPoints || 0) + earnedPoints;
+
     await habit.save();
   }
 
-  async ensureWeeklyLog(habitId: string): Promise<IWeeklyLog> {
-    const weekStart = this.getStartOfWeek();
+  async ensureWeeklyLog(habitId: string, weekStart?: Date): Promise<IWeeklyLog> {
+    const targetWeekStart = weekStart || this.getStartOfWeek();
 
     const existing = await WeeklyLog.findOne({
       habitId: new Types.ObjectId(habitId),
-      weekStartDate: weekStart
+      weekStartDate: targetWeekStart
     });
 
     if (existing) return existing as IWeeklyLog;
 
     const newLog = await WeeklyLog.create({
       habitId: new Types.ObjectId(habitId),
-      weekStartDate: weekStart,
+      weekStartDate: targetWeekStart,
       days: {
         0: { completed: false }, 1: { completed: false }, 2: { completed: false },
         3: { completed: false }, 4: { completed: false }, 5: { completed: false },

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import userService from '../services/userService';
-import type { User } from '../lib/apiClient';
+import type { User } from '../types';
 import { Shield, Mail, User as UserIcon, Calendar, ArrowRight } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {

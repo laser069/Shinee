@@ -1,125 +1,112 @@
 import React from 'react';
-import { Check, Trash2, Edit2 } from 'lucide-react';
-import type { Habit } from '../types/api';
+import { Check, Flame } from 'lucide-react';
+import type { DashboardItem, Habit } from '../types';
 
-interface WeeklyHabitTrackerProps {
-  habits: Habit[];
-  onToggle: (habitId: string, date: string) => void;
-  onEdit: (habit: Habit) => void;
-  onDelete: (habitId: string) => void;
+interface Props {
+  items: DashboardItem[];
+  onToggle: (id: string, dayIdx: number) => void;
 }
 
-const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+// Helper: Monday-aligned index
+const getTodayIndex = () => (new Date().getDay() + 6) % 7;
 
-const COLOR_MAP: Record<string, { bg: string; text: string; border: string; habitBg: string }> = {
-  indigo: { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-200', habitBg: 'bg-indigo-50' },
-  rose: { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-200', habitBg: 'bg-rose-50' },
-  emerald: { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200', habitBg: 'bg-emerald-50' },
-  amber: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200', habitBg: 'bg-amber-50' },
-  blue: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200', habitBg: 'bg-blue-50' },
-  purple: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200', habitBg: 'bg-purple-50' },
-};
-
-export const WeeklyHabitTracker: React.FC<WeeklyHabitTrackerProps> = ({ habits, onToggle, onEdit, onDelete }) => {
-  if (habits.length === 0) {
-    return null;
-  }
+const HabitRow: React.FC<{
+  item: DashboardItem;
+  todayIdx: number;
+  onToggle: (id: string, idx: number) => void;
+}> = ({ item, todayIdx, onToggle }) => {
+  const { habit, currentLog } = item;
 
   return (
-    <div className="bg-white border border-gray-200 rounded shadow-sm overflow-x-auto font-sans">
-      <table className="w-full text-left border-collapse whitespace-nowrap">
-        <thead>
-          <tr className="border-b border-gray-200 text-gray-400 text-[11px] font-semibold uppercase tracking-wider">
-            <th className="p-3 font-medium">Habits</th>
-            <th className="p-3 font-medium">Goal</th>
-            {DAYS_OF_WEEK.map(day => (
-              <th key={day} className="p-3 font-medium text-center w-12">
-                {day}
-              </th>
-            ))}
-            <th className="p-3 font-medium w-40 text-left">Progress</th>
-            <th className="p-3 font-medium w-24 text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="text-sm">
-          {habits.map((habit) => {
-            const colors = COLOR_MAP[habit.ui?.color] || COLOR_MAP.indigo;
-            
-            return (
-              <tr key={habit._id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors group">
-                <td className="p-3">
-                  <div className="flex items-center gap-2">
-                    <div className={`px-2 py-1 rounded flex items-center gap-2 ${colors.habitBg}`}>
-                      <span className="text-base leading-none">{habit.ui?.icon || '🎯'}</span>
-                      <span className="font-medium text-gray-700 text-[13px]">{habit.name}</span>
-                    </div>
-                  </div>
-                </td>
+    <div className="group flex items-center py-8 px-6 hover:bg-white/[0.02] rounded-[2.5rem] transition-all duration-300">
+      
+      {/* 1. Large Readable Identity */}
+      <div className="w-[400px] flex items-center gap-8">
+        <span className="text-5xl">{habit.icon}</span>
+        <div className="flex flex-col gap-1">
+          {/* Hero Text: Big & Clear */}
+          <h3 className="text-3xl font-extrabold text-white tracking-tight">
+            {habit.name}
+          </h3>
+          
+          {/* Subtext: Simple explanation */}
+          <div className="flex items-center gap-5 mt-1">
+            <div className="flex items-center gap-1.5 text-orange-500">
+              <Flame size={14} fill="currentColor" />
+              <span className="text-sm font-bold">{habit.dailyStreak} day streak</span>
+            </div>
+            <div className="h-1 w-1 rounded-full bg-slate-700" />
+            <span className="text-sm font-medium text-slate-500">
+              Goal: {habit.goalCount} times this week
+            </span>
+          </div>
+        </div>
+      </div>
 
-                <td className="p-3">
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${colors.bg} ${colors.text}`}>
-                    {habit.goal?.weeklyTarget || habit.goal?.targetValue} x week
-                  </span>
-                </td>
-                
-                {habit.grid?.map((dayObj, idx) => {
-                  const isScheduled = dayObj.isScheduled;
-                  const isCompleted = dayObj.isCompleted;
+      {/* 2. Minimalist Grid (Small Checkboxes) */}
+      <div className="flex-1 flex justify-center gap-3">
+        {[0, 1, 2, 3, 4, 5, 6].map((idx) => {
+          const isDone = currentLog.days[idx]?.completed;
+          const isToday = idx === todayIdx;
+          const isScheduled = habit.frequencyType === 'fixed' ? habit.fixedDays.includes(idx) : true;
 
-                  return (
-                    <td key={idx} className="p-2 text-center">
-                      <button
-                        onClick={() => onToggle(habit._id, dayObj.date)}
-                        className={`w-5 h-5 flex items-center justify-center rounded-sm transition-all duration-200 border ${
-                          !isScheduled 
-                            ? 'bg-gray-50 border-gray-100 cursor-not-allowed opacity-40' 
-                            : isCompleted
-                              ? 'bg-indigo-500 border-indigo-500 text-white shadow-[0_0_8px_rgba(99,102,241,0.2)]'
-                              : 'bg-white border-gray-200 hover:border-indigo-300 shadow-sm'
-                        }`}
-                        title={isScheduled ? (`${isCompleted ? 'Unmark' : 'Mark'} as completed`) : 'Not scheduled'}
-                      >
-                        {isCompleted && <Check className="w-3 h-3 stroke-[3]" />}
-                      </button>
-                    </td>
-                  );
-                })}
+          return (
+            <button
+              key={idx}
+              disabled={!isScheduled}
+              onClick={() => onToggle(habit._id, idx)}
+              className={`
+                relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500
+                ${isDone 
+                  ? 'bg-emerald-500 text-slate-900 shadow-lg shadow-emerald-500/20' 
+                  : isScheduled 
+                    ? 'bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800' 
+                    : 'opacity-10 cursor-not-allowed'
+                }
+                ${isToday && !isDone && isScheduled ? 'border-indigo-500 border-2' : ''}
+              `}
+            >
+              {isDone ? <Check size={18} strokeWidth={4} /> : null}
+            </button>
+          );
+        })}
+      </div>
 
-                <td className="p-3 text-[12px] font-semibold text-gray-500">
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 tabular-nums">{habit.weeklyProgress || 0}%</span>
-                    <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-emerald-500 rounded-full transition-all duration-700 ease-out" 
-                        style={{ width: `${habit.weeklyProgress || 0}%` }}
-                      />
-                    </div>
-                  </div>
-                </td>
+      {/* 3. Growth Percentage */}
+      <div className="w-24 text-right">
+        <span className="text-3xl font-black text-slate-700 group-hover:text-indigo-400 transition-colors tabular-nums">
+          {Math.round((currentLog.stats.timesCompleted / (habit.goalCount || 1)) * 100)}%
+        </span>
+      </div>
+    </div>
+  );
+};
 
-                <td className="p-3 text-center">
-                   <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                    <button 
-                      onClick={() => onEdit(habit)}
-                      className="p-1 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 rounded"
-                      title="Edit Habit"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button 
-                      onClick={() => onDelete(habit._id)}
-                      className="p-1 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded"
-                      title="Delete Habit"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                   </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+export const WeeklyHabitTracker: React.FC<Props> = ({ items, onToggle }) => {
+  const todayIdx = getTodayIndex();
+  const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  return (
+    <div className="max-w-6xl mx-auto py-16">
+      {/* Clean Headers */}
+      <div className="flex items-center px-10 mb-6 opacity-40">
+        <div className="w-[400px] text-xs font-black uppercase tracking-[0.3em] text-slate-400">Activity</div>
+        <div className="flex-1 flex justify-center gap-3">
+          {labels.map((l, i) => (
+            <div key={i} className={`w-10 text-center text-xs font-black ${i === todayIdx ? 'text-indigo-500' : ''}`}>
+              {l}
+            </div>
+          ))}
+        </div>
+        <div className="w-24 text-right text-xs font-black uppercase tracking-[0.3em] text-slate-400">Power</div>
+      </div>
+
+      {/* Content */}
+      <div className="space-y-2">
+        {items.map((item) => (
+          <HabitRow key={item.habit._id} item={item} todayIdx={todayIdx} onToggle={onToggle} />
+        ))}
+      </div>
     </div>
   );
 };

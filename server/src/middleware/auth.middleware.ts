@@ -21,8 +21,9 @@ export const protect = (req: AuthRequest, res: Response, next: NextFunction) => 
       token = req.headers.authorization.split(" ")[1];
 
       // 2. Verify token
-      const secret = env.JWT_SECRET || '';
-      const decoded = jwt.verify(token!, env.JWT_SECRET as string) as unknown as TokenPayload;      // 3. Attach user to request
+      const decoded = jwt.verify(token!, env.JWT_SECRET as string) as unknown as TokenPayload;
+      
+      // 3. Attach user to request
       req.user = { id: decoded.id, isAdmin: decoded.isAdmin };
       
       return next(); // Move to the controller
@@ -32,7 +33,7 @@ export const protect = (req: AuthRequest, res: Response, next: NextFunction) => 
   }
 
   if (!token) {
-    res.status(401).json({ message: "Not authorized, no token" });
+    return res.status(401).json({ message: "Not authorized, no token" });
   }
 };
 

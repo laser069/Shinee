@@ -11,9 +11,9 @@ export const createTask = async (req: AuthRequest, res: Response) => {
     const userId = req.user.id;
 
     const task = await taskService.createTask(userId, boardId, taskData);
-    res.status(201).json(task);
+    res.status(201).json({ success: true, data: task });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -27,13 +27,13 @@ export const getMyTasks = async (req: AuthRequest, res: Response) => {
     // If boardId is provided, filter by board, otherwise get all user tasks
     if (boardId && typeof boardId === 'string') {
       const tasks = await taskService.getTasksByBoard(boardId);
-      return res.json(tasks);
+      return res.json({ success: true, data: tasks });
     }
     
     const tasks = await taskService.getTasksByUser(req.user.id);
-    res.json(tasks);
+    res.json({ success: true, data: tasks });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -44,10 +44,10 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     }
     const taskId = req.params.id as string;
     const task = await taskService.updateTask(taskId, req.user.id, req.body);
-    if (!task) return res.status(404).json({ message: "Task not found" });
-    res.json(task);
+    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
+    res.json({ success: true, data: task });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -58,9 +58,9 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
     }
     const taskId = req.params.id as string;
     const task = await taskService.deleteTask(taskId, req.user.id);
-    if (!task) return res.status(404).json({ message: "Task not found" });
-    res.json({ message: "Task deleted successfully" });
+    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
+    res.json({ success: true, message: "Task deleted successfully" });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };

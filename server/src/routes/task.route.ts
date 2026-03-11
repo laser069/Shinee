@@ -4,8 +4,8 @@ import {
   getMyTasks, 
   updateTask, 
   deleteTask 
-} from "../controllers/task.controller.js";
-import { protect } from "../middleware/auth.middleware.js";
+} from "../controllers/task.controller";
+import { protect } from "../middleware/auth.middleware";
 
 const router = Router();
 

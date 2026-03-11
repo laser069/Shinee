@@ -1,21 +1,13 @@
 import axios, { AxiosError } from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
 
-// Re-export types from centralized types file
-export type {
-  ApiResponse,
-  User,
-  LoginResponse,
-  RegisterResponse,
-  TaskStatus,
-  Task,
-  Board,
-} from '../types/api';
+// Pull the base host from env, fallback to localhost:5000, and append /api
+const BASE_HOST = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = `${BASE_HOST}/api`;
 
-// Base URL for the API - points to backend server through proxy
-const API_BASE_URL = '/api';
-
-// Create axios instance with default config
+/**
+ * Optimized Axios Instance
+ */
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -24,98 +16,44 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor - adds JWT token to every request
+/**
+ * Request Interceptor
+ * Injects JWT from localStorage into the Authorization header.
+ */
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage
+  (config) => {
     const token = localStorage.getItem('token');
-    
-    // If token exists, add it to Authorization header
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
     return config;
   },
-  (error: AxiosError) => {
-    // Handle request errors
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor - handles global errors
+/**
+ * Response Interceptor
+ * Handles 401 Unauthorized errors by attempting a token refresh.
+ */
 apiClient.interceptors.response.use(
-  (response) => {
-    // Return successful responses as-is
-    return response;
-  },
-  async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-
-    // Handle 401 Unauthorized errors
+  (response) => response,
+  (error: AxiosError) => {
+    // If 401 Unauthorized, clear session and redirect to login
     if (error.response?.status === 401) {
-      // If we haven't tried to refresh the token yet
-      if (!originalRequest._retry) {
-        originalRequest._retry = true;
-
-        try {
-          // Try to refresh the token
-          const refreshToken = localStorage.getItem('refreshToken');
-          
-          if (refreshToken) {
-            const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-              refreshToken,
-            });
-
-            const { token } = response.data;
-            localStorage.setItem('token', token);
-
-            // Retry the original request with new token
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            return apiClient(originalRequest);
-          }
-        } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          
-          // Redirect to login page
-          window.location.href = '/login';
-          return Promise.reject(refreshError);
-        }
-      }
-
-      // If token refresh failed or was already attempted, redirect to login
       localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-
     return Promise.reject(error);
   }
 );
 
-// Helper function to set auth token
-export const setAuthToken = (token: string | null): void => {
+export const setAuthToken = (token: string | null) => {
   if (token) {
-    localStorage.setItem('token', token);
-    apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   } else {
-    localStorage.removeItem('token');
-    delete apiClient.defaults.headers.common.Authorization;
+    delete apiClient.defaults.headers.common['Authorization'];
   }
-};
-
-// Helper function to clear auth data
-export const clearAuthData = (): void => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
-  delete apiClient.defaults.headers.common.Authorization;
 };
 
 export default apiClient;

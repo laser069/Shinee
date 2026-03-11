@@ -2,16 +2,31 @@ import React, { useEffect, useState } from 'react';
 import habitService from '../services/habitService';
 import { HabitModal } from '../components/HabitModal';
 import { WeeklyHabitTracker } from '../components/WeeklyHabitTracker';
-import type { Habit } from '../types/api';
-import { 
-  Plus
-} from 'lucide-react';
+import type { DashboardItem, Habit } from '../types';
+import { HabitsDashboard } from '../components/HabitsDashboard';
+import { Plus, RefreshCw, CheckSquare } from 'lucide-react';
+
+// Returns "Week of Mon DD – Sun DD"
+const getWeekLabel = () => {
+  const now = new Date();
+  const day = now.getDay(); // Sun=0
+  const diffToMon = day === 0 ? -6 : 1 - day;
+  const mon = new Date(now);
+  mon.setDate(now.getDate() + diffToMon);
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+
+  const fmt = (d: Date) =>
+    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  return `${fmt(mon)} – ${fmt(sun)}`;
+};
 
 const HabitsPage: React.FC = () => {
-  const [habits, setHabits] = useState<Habit[]>([]);
+  const [items, setItems] = useState<DashboardItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingHabit, setEditingHabit] = useState<Habit | undefined>(undefined);
+  const [refreshing, setRefreshing] = useState(false);
+  const [modal, setModal] = useState<{ open: boolean; habit?: Habit }>({ open: false });
 
   useEffect(() => {
     fetchHabits();
@@ -21,137 +36,129 @@ const HabitsPage: React.FC = () => {
     try {
       if (!silent) setLoading(true);
       const data = await habitService.getHabitsDashboard();
-      setHabits(data);
-    } catch (err) {
-      console.error('Error fetching habits:', err);
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  };
-
-  const handleToggle = async (habitId: string, date: string) => {
-    try {
-      // Optimistic Update
-      setHabits(prev => prev.map(h => {
-        if (h._id === habitId && h.grid) {
-          const newGrid = h.grid.map(g => g.date === date ? { ...g, isCompleted: !g.isCompleted } : g);
-          const completedCount = newGrid.filter(g => g.isCompleted).length;
-          const scheduledCount = h.goal.scheduledDays.length || 1;
-          const progress = Math.min(Math.round((completedCount / scheduledCount) * 100), 100);
-          return { ...h, grid: newGrid, weeklyProgress: progress };
-        }
-        return h;
-      }));
-      
-      await habitService.toggleDay({ habitId, date });
-      // Final sync for stats (Silent)
-      await fetchHabits(true);
+      setItems(data);
     } catch (err) {
       console.error(err);
-      await fetchHabits(true);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEdit = (habit: Habit) => {
-    setEditingHabit(habit);
-    setIsModalOpen(true);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchHabits(true);
+    setRefreshing(false);
   };
 
-  const handleDelete = async (habitId: string) => {
-    if (!window.confirm("Delete this habit forever?")) return;
+  const handleToggle = async (habitId: string, dayIndex: number) => {
     try {
-      await habitService.deleteHabit(habitId);
-      await fetchHabits();
+      await habitService.toggleDay(habitId, dayIndex);
+      await fetchHabits(true);
     } catch (err) {
-      alert("Delete failed");
+      console.error('Toggle failed', err);
     }
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingHabit(undefined);
+  const handleDelete = async (id: string) => {
+    if (!confirm('Permanently delete this habit and all its history?')) return;
+    await habitService.deleteHabit(id);
+    fetchHabits(true);
   };
 
   if (loading) {
     return (
-      <div className="flex h-[80vh] items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 border-gray-100 border-t-indigo-500 rounded-full animate-spin" />
-          <span className="text-sm font-medium text-gray-400">Loading your habits...</span>
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="flex flex-col items-center gap-3 text-slate-500">
+          <div className="w-8 h-8 rounded-full border-2 border-slate-700 border-t-indigo-500 animate-spin" />
+          <span className="text-sm">Loading tracker…</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/30 font-sans selection:bg-indigo-100 selection:text-indigo-900 pb-20">
-      <div className="max-w-6xl mx-auto pt-12 px-6">
-        <header className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="text-4xl">📔</div>
-              <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Habit Tracker</h1>
-            </div>
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[14px] font-semibold rounded-lg shadow-sm transition-all flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Habit
-            </button>
-          </div>
-          <p className="mt-2 text-gray-500 font-medium text-[15px] border-b border-gray-200 pb-4">
-            Track your daily discipline and monitor weekly progress at a glance.
-          </p>
-        </header>
+    <div className="max-w-5xl mx-auto px-6 py-10">
 
-        <div className="mt-6">
-          {habits.length === 0 ? (
-            <div className="bg-white border-2 border-dashed border-gray-200 py-20 rounded-lg text-center">
-               <div className="text-4xl mb-4 text-gray-300">🍃</div>
-               <h3 className="text-lg font-semibold text-gray-700">No habits yet</h3>
-               <p className="text-gray-400 text-sm mb-6">Start tracking your journey today.</p>
-               <button 
-                 onClick={() => setIsModalOpen(true)}
-                 className="text-indigo-600 font-bold hover:underline"
-               >
-                 Create your first habit
-               </button>
-            </div>
-          ) : (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <WeeklyHabitTracker 
-                habits={habits}
-                onToggle={handleToggle}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            </div>
-          )}
+      {/* ── Page Header (Notion-style) ── */}
+      <div className="mb-8">
+        {/* Big icon */}
+        <div className="text-5xl mb-3 select-none">✅</div>
+
+        {/* Title */}
+        <h1 className="text-4xl font-black text-white tracking-tight mb-1">
+          Weekly Habit Tracker
+        </h1>
+
+        {/* Sub-row: week label + reset button */}
+        <div className="flex items-center gap-3 mt-3">
+          <button
+            onClick={handleRefresh}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-400 border border-slate-700/60 hover:border-slate-600 hover:text-slate-200 bg-slate-800/40 hover:bg-slate-800/70 transition-all"
+          >
+            <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+            Reset week
+          </button>
+          <span className="text-sm text-slate-500">{getWeekLabel()}</span>
         </div>
-
-        <footer className="mt-8 flex items-center justify-between text-[12px] text-gray-400">
-           <div className="flex gap-4">
-             <div className="flex items-center gap-1.5">
-               <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
-               <span>In Progress</span>
-             </div>
-             <div className="flex items-center gap-1.5">
-               <div className="w-2 h-2 rounded-full bg-emerald-500" />
-               <span>Completed</span>
-             </div>
-           </div>
-           <div>
-             Last updated: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-           </div>
-        </footer>
       </div>
 
-      {isModalOpen && (
-        <HabitModal 
-          habit={editingHabit}
-          onClose={handleCloseModal}
-          onSuccess={fetchHabits} 
+      {/* ── Habits Dashboard ── */}
+      <HabitsDashboard items={items} />
+
+      {/* ── Section Label (Notion database group) ── */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-slate-400">
+          <CheckSquare size={15} className="text-indigo-400" />
+          Weekly Habits
+          <span className="ml-1 text-xs text-slate-600 font-normal">
+            ({items.length})
+          </span>
+        </div>
+
+        <button
+          onClick={() => setModal({ open: true })}
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+        >
+          <Plus size={15} />
+          New habit
+        </button>
+      </div>
+
+      {/* ── Tracker Table ── */}
+      {items.length === 0 ? (
+        <div className="text-center py-20 rounded-xl border-2 border-dashed border-slate-800 bg-slate-900/20">
+          <div className="text-4xl mb-3">📋</div>
+          <p className="text-slate-400 font-medium">No habits yet</p>
+          <p className="text-slate-600 text-sm mt-1">
+            Click "New habit" to start building your routine.
+          </p>
+        </div>
+      ) : (
+        <WeeklyHabitTracker
+          items={items}
+          onToggle={handleToggle}
+          onEdit={(h) => setModal({ open: true, habit: h })}
+          onDelete={handleDelete}
+        />
+      )}
+
+      {/* ── Add row shortcut below table ── */}
+      {items.length > 0 && (
+        <button
+          onClick={() => setModal({ open: true })}
+          className="mt-2 flex items-center gap-2 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-300 hover:bg-slate-800/30 rounded-lg transition-all w-full border border-transparent hover:border-slate-800"
+        >
+          <Plus size={14} />
+          New habit
+        </button>
+      )}
+
+      {/* ── Modal ── */}
+      {modal.open && (
+        <HabitModal
+          habit={modal.habit}
+          onClose={() => setModal({ open: false })}
+          onSuccess={() => fetchHabits(true)}
         />
       )}
     </div>

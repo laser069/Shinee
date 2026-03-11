@@ -1,31 +1,30 @@
 import React, { useState } from 'react';
 import habitService from '../services/habitService';
-import type { Habit, HabitCategory } from '../types/api';
+import type { Habit, CreateHabitPayload, FrequencyType } from '../types';
+import { X } from 'lucide-react';
 
 interface HabitModalProps {
-  habit?: Habit; // If provided, we are in Edit mode
+  habit?: Habit;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const COLORS = ['indigo', 'rose', 'emerald', 'amber', 'blue', 'purple'];
+const COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#3b82f6', '#a855f7'];
 const ICONS = ['🎯', '💧', '📚', '🧘', '🏃', '🥗', '💻', '💤', '💰', '🧠'];
 
 export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose, onSuccess }) => {
   const [name, setName] = useState(habit?.name || '');
-  const [category, setCategory] = useState<HabitCategory>(habit?.category || 'Growth');
-  const [icon, setIcon] = useState(habit?.ui?.icon || '🎯');
-  const [color, setColor] = useState(habit?.ui?.color || 'indigo');
-  const [targetValue, setTargetValue] = useState(habit?.goal?.targetValue || 1);
-  const [weeklyTarget, setWeeklyTarget] = useState(habit?.goal?.weeklyTarget || 5);
-  const [unit, setUnit] = useState(habit?.goal?.unit || 'times');
-  const [scheduledDays, setScheduledDays] = useState<number[]>(habit?.goal?.scheduledDays || [1, 2, 3, 4, 5]);
+  const [icon, setIcon] = useState(habit?.icon || '🎯');
+  const [color, setColor] = useState(habit?.color || '#6366f1');
+  const [frequencyType, setFrequencyType] = useState<FrequencyType>(habit?.frequencyType || 'flexible');
+  const [goalCount, setGoalCount] = useState(habit?.goalCount || 1);
+  const [fixedDays, setFixedDays] = useState<number[]>(habit?.fixedDays || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEdit = !!habit;
 
   const toggleDay = (day: number) => {
-    setScheduledDays(prev => 
+    setFixedDays(prev => 
       prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day].sort()
     );
   };
@@ -34,30 +33,24 @@ export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose, onSucces
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const payload = {
+      const payload: CreateHabitPayload = {
         name,
-        category,
-        ui: { icon, color },
-        goal: {
-          type: 'boolean' as const,
-          targetValue,
-          unit,
-          frequency: 'daily' as const,
-          scheduledDays,
-          weeklyTarget,
-          difficulty: 'medium' as const
-        }
+        icon,
+        color,
+        frequencyType,
+        goalCount,
+        fixedDays: frequencyType === 'fixed' ? fixedDays : []
       };
 
       if (isEdit && habit) {
         await habitService.updateHabit(habit._id, payload);
       } else {
-        await habitService.createHabit(payload as any);
+        await habitService.createHabit(payload);
       }
       onSuccess();
       onClose();
     } catch (err) {
-      alert(`Failed to ${isEdit ? 'update' : 'create'} habit`);
+      alert(`Failed to save habit`);
     } finally {
       setIsSubmitting(false);
     }
@@ -65,32 +58,27 @@ export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose, onSucces
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-[#1e293b] border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 animate-in zoom-in duration-200 overflow-y-auto max-h-[90vh]">
-        <header className="flex justify-between items-center mb-6 sticky top-0 bg-[#1e293b] py-2 z-10">
-          <h2 className="text-2xl font-bold text-white tracking-tight">
-            {isEdit ? 'Update Habit' : 'New Habit'}
-          </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-            ✕
-          </button>
+      <div className="bg-[#1e293b] border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 overflow-y-auto max-h-[90vh]">
+        <header className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white italic">{isEdit ? 'Edit Habit' : 'New Habit'}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={24} /></button>
         </header>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Habit Name</label>
+              <label className="block text-sm font-medium text-slate-400 mb-1.5">Habit Name</label>
               <input 
                 required
-                placeholder="e.g., Drink Water"
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <div className="w-20">
-              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Icon</label>
+            <div className="w-24">
+              <label className="block text-sm font-medium text-slate-400 mb-1.5">Icon</label>
               <select 
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer text-xl"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none cursor-pointer"
                 value={icon}
                 onChange={(e) => setIcon(e.target.value)}
               >
@@ -100,111 +88,57 @@ export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose, onSucces
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2 ml-1">Color Theme</label>
-            <div className="flex gap-3">
-              {COLORS.map(c => (
+            <label className="block text-sm font-medium text-slate-400 mb-2">Frequency Mode</label>
+            <div className="flex gap-2">
+              {(['flexible', 'fixed'] as FrequencyType[]).map(type => (
                 <button
-                  key={c}
+                  key={type}
                   type="button"
-                  onClick={() => setColor(c)}
-                  className={`w-8 h-8 rounded-full border-2 transition-all ${
-                    color === c ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
-                  } ${
-                    c === 'indigo' ? 'bg-indigo-500' :
-                    c === 'rose' ? 'bg-rose-500' :
-                    c === 'emerald' ? 'bg-emerald-500' :
-                    c === 'amber' ? 'bg-amber-500' :
-                    c === 'blue' ? 'bg-blue-500' :
-                    'bg-purple-500'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Category</label>
-            <select 
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
-              value={category}
-              onChange={(e) => setCategory(e.target.value as HabitCategory)}
-            >
-              <option value="Health">💪 Health</option>
-              <option value="Growth">🧠 Growth</option>
-              <option value="Quit">🚫 Quit</option>
-              <option value="Social">🤝 Social</option>
-              <option value="Finance">💰 Finance</option>
-              <option value="Mind">🧘 Mind</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2 ml-1">Scheduled Days</label>
-            <div className="flex justify-between gap-1">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => toggleDay(idx)}
-                  className={`w-9 h-9 rounded-lg font-bold transition-all text-xs border ${
-                    scheduledDays.includes(idx)
-                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-md'
-                      : 'bg-slate-900 border-slate-700 text-slate-500 hover:border-slate-500'
+                  onClick={() => setFrequencyType(type)}
+                  className={`flex-1 py-2 rounded-lg border text-sm font-bold capitalize transition-all ${
+                    frequencyType === type ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-500'
                   }`}
                 >
-                  {day}
+                  {type}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          {frequencyType === 'fixed' ? (
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Target Value</label>
+              <label className="block text-sm font-medium text-slate-400 mb-2">Select Days</label>
+              <div className="flex justify-between">
+                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => toggleDay(idx)}
+                    className={`w-10 h-10 rounded-lg font-bold border transition-all ${
+                      fixedDays.includes(idx) ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-500'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-1.5">Weekly Goal (Times)</label>
               <input 
-                type="number"
-                min="1"
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                value={targetValue}
-                onChange={(e) => setTargetValue(Number(e.target.value))}
+                type="number" min="1" max="7"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none"
+                value={goalCount}
+                onChange={(e) => setGoalCount(Number(e.target.value))}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Weekly Target</label>
-              <input 
-                type="number"
-                min="1"
-                max="7"
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                value={weeklyTarget}
-                onChange={(e) => setWeeklyTarget(Number(e.target.value))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Unit</label>
-              <input 
-                placeholder="times, ml, etc."
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-              />
-            </div>
-          </div>
+          )}
 
           <div className="flex gap-3 pt-4">
-            <button 
-              type="button" 
-              onClick={onClose}
-              className="flex-1 px-4 py-3 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-colors font-bold"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
-            >
-              {isSubmitting ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update Habit' : 'Create Habit')}
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-3 border border-slate-700 text-slate-300 rounded-xl font-bold">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-500 transition-all">
+              {isSubmitting ? 'Saving...' : 'Save Habit'}
             </button>
           </div>
         </form>

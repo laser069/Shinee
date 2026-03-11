@@ -29,28 +29,29 @@ export const HabitSchema = z.object({
 // For creating a habit (Input from user)
 export const CreateHabitSchema = HabitSchema.omit({
   _id: true,
+  user: true,
   dailyStreak: true,
   weeklyStreak: true,
   longestStreak: true,
   lastCompletedDate: true,
   multiplier: true,
   totalPoints: true,
+  isActive: true,
   createdAt: true,
   updatedAt: true,
 });
 
 // For updating habit settings
-export const UpdateHabitSchema = z.object({
-  body: HabitSchema.pick({
-    name: true,
-    icon: true,
-    color: true,
-    frequencyType: true,
-    fixedDays: true,
-    goalCount: true,
-    isActive: true,
-  }).partial(),
-});
+export const UpdateHabitSchema = HabitSchema.pick({
+  name: true,
+  icon: true,
+  color: true,
+  frequencyType: true,
+  fixedDays: true,
+  goalCount: true,
+  isActive: true,
+}).partial();
+
 
 export type Habit = z.infer<typeof HabitSchema>;
 export type CreateHabitPayload = z.infer<typeof CreateHabitSchema>;
