@@ -6,6 +6,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
 import BoardDetailsPage from './pages/BoardDetailsPage';
 import DashboardPage from './pages/DashboardPage';
+import HabitsPage from './pages/HabitsPage';
 
 function App() {
   return (
@@ -41,6 +42,17 @@ function App() {
               <ProtectedRoute>
                 <div className="w-full h-[calc(100vh-80px)]">
                   <BoardDetailsPage />
+                </div>
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/habits" 
+            element={
+              <ProtectedRoute>
+                <div className="w-full h-[calc(100vh-80px)] overflow-y-auto">
+                  <HabitsPage />
                 </div>
               </ProtectedRoute>
             } 
