@@ -1,6 +1,17 @@
 import axios, { AxiosError } from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
 
+// Re-export types from centralized types file
+export type {
+  ApiResponse,
+  User,
+  LoginResponse,
+  RegisterResponse,
+  TaskStatus,
+  Task,
+  Board,
+} from '../types/api';
+
 // Base URL for the API - points to backend server through proxy
 const API_BASE_URL = '/api';
 
@@ -106,58 +117,5 @@ export const clearAuthData = (): void => {
   localStorage.removeItem('user');
   delete apiClient.defaults.headers.common.Authorization;
 };
-
-// Types for API responses
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-}
-
-export interface User {
-  _id: string;
-  name: string;
-  email: string;
-  isAdmin: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface LoginResponse {
-  _id: string;
-  name: string;
-  email: string;
-  isAdmin: boolean;
-  token: string;
-}
-
-export interface RegisterResponse {
-  user: User;
-  token: string;
-}
-
-// Task status enum
-export type TaskStatus = 'todo' | 'inprogress' | 'done';
-
-// Task interface
-export interface Task {
-  _id: string;
-  title: string;
-  description: string;
-  status: TaskStatus;
-  user: string;
-  boardId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// Board interface
-export interface Board {
-  _id: string;
-  title: string;
-  user: string;
-  tasks: string[]; // Array of task IDs, not full Task objects
-  createdAt?: string;
-  updatedAt?: string;
-}
 
 export default apiClient;

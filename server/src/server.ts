@@ -6,7 +6,7 @@ import cors from 'cors';
 
 import userRoutes from './routes/user.route';
 import boardRoutes from './routes/board.route';
-import taskRoutes from './routes/board.route';
+import taskRoutes from './routes/task.route';
 
 const app = express();
 // const PORT =process.env.PORT

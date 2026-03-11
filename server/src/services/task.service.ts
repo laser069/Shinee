@@ -7,6 +7,7 @@ class TaskService {
     const task = await Task.create({
       ...data,
       user: userId,
+      boardId,
     });
 
     // Automatically push the new task ID to the specified board
@@ -19,6 +20,10 @@ class TaskService {
 
   async getTasksByUser(userId: string) {
     return await Task.find({ user: userId }).sort({ createdAt: -1 });
+  }
+
+  async getTasksByBoard(boardId: string) {
+    return await Task.find({ boardId }).sort({ createdAt: -1 });
   }
 
   async updateTask(taskId: string, userId: string, updateData: Partial<CreateTaskPayload>) {

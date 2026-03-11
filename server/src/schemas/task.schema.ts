@@ -14,6 +14,7 @@ export const TaskSchema = z.object({
     .max(1000, "Description is too long"),
   status: TaskStatusEnum.default('todo'),
   user: z.string(), // The ObjectId of the user
+  boardId: z.string().optional(), // The ObjectId of the board
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });

@@ -21,12 +21,13 @@ const TASK_ENDPOINTS = {
 } as const;
 
 /**
- * Get all tasks for the authenticated user
- * GET /api/tasks
+ * Get all tasks for the authenticated user, optionally filtered by board
+ * GET /api/tasks?boardId=...
  * Requires JWT token
  */
-export const getTasks = async (): Promise<Task[]> => {
-  const response = await apiClient.get<Task[]>(TASK_ENDPOINTS.TASKS);
+export const getTasks = async (boardId?: string): Promise<Task[]> => {
+  const params = boardId ? { boardId } : {};
+  const response = await apiClient.get<Task[]>(TASK_ENDPOINTS.TASKS, { params });
   return response.data;
 };
 

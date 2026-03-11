@@ -22,6 +22,14 @@ export const getMyTasks = async (req: AuthRequest, res: Response) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
+    const { boardId } = req.query;
+    
+    // If boardId is provided, filter by board, otherwise get all user tasks
+    if (boardId && typeof boardId === 'string') {
+      const tasks = await taskService.getTasksByBoard(boardId);
+      return res.json(tasks);
+    }
+    
     const tasks = await taskService.getTasksByUser(req.user.id);
     res.json(tasks);
   } catch (error: any) {

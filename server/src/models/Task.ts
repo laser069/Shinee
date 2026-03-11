@@ -5,6 +5,7 @@ const taskSchema = new mongoose.Schema({
     description:{type:String,required:true},
     status:{type:String,enum:['todo','inprogress','done'],default:'todo'},
     user:{type:mongoose.Schema.Types.ObjectId,ref:'User',required:true},
+    boardId:{type:mongoose.Schema.Types.ObjectId,ref:'Board'},
     createdAt:{type:Date,default:Date.now},
     updatedAt:{type:Date,default:Date.now}
 })
