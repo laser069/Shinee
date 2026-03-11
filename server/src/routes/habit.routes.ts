@@ -1,38 +1,49 @@
 import { Router } from "express";
-import * as ctrl from "../controllers/habit.controller.js";
-import { protect } from "../middleware/auth.middleware.js";
-import { validate } from "../middleware/validate.middleware.js";
-import { HabitValidationSchema } from "../schemas/habit.schema.js";
+import { 
+  getDashboard, 
+  toggleActivity, 
+  createHabit, 
+  updateHabit, 
+  archiveHabit, 
+  deleteHabit 
+} from "../controllers/habit.controller";
+import { protect } from "../middleware/auth.middleware";
+import { validate } from "../middleware/validate.middleware";
+import { 
+  CreateHabitSchema, 
+  UpdateHabitSchema 
+} from "../schemas/habit.schema";
 
 const router = Router();
 
-// All habit routes require a logged-in user
+// All habit routes require authentication
 router.use(protect);
 
 /**
- * DASHBOARD & CREATION
- * GET  /api/habits/dashboard -> Returns the Notion-style 7-day grid
- * POST /api/habits           -> Creates the habit template
+ * Main Habit Management
  */
-router.get("/dashboard", ctrl.getDashboard);
-router.post("/", validate(HabitValidationSchema), ctrl.createHabit);
+router.route("/")
+  .get(getDashboard) // Fetches the 7-day grid for all habits
+  .post(validate(CreateHabitSchema), createHabit);
 
 /**
- * INTERACTIVITY (The "Checkboxes")
- * POST /api/habits/toggle -> Handles checking/unchecking and numeric logs
+ * Checkbox Toggle Action
+ * We use POST here as it involves complex streak/log logic 
+ * and requires the date/value in the body.
  */
-router.post("/toggle", ctrl.toggleActivity);
+router.post("/toggle", toggleActivity);
 
 /**
- * INDIVIDUAL HABIT MANAGEMENT
- * PATCH  /api/habits/:id         -> Edit name, icons, schedule, or goals
- * PATCH  /api/habits/:id/archive -> Hide habit from the main dashboard
- * DELETE /api/habits/:id         -> Full removal of habit and its logs
+ * Specific Habit Operations
  */
 router.route("/:id")
-  .patch(ctrl.updateHabit)
-  .delete(ctrl.deleteHabit);
+  .patch(validate(UpdateHabitSchema), updateHabit) // Edit settings
+  .delete(deleteHabit); // Permanent deletion
 
-router.patch("/:id/archive", ctrl.archiveHabit);
+/**
+ * Archiving
+ * Separated to keep the DELETE method reserved for permanent removal
+ */
+router.patch("/:id/archive", archiveHabit);
 
 export default router;

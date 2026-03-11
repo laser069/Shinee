@@ -1,8 +1,6 @@
 import { Response } from "express";
-import { HabitService } from "../services/habit.service.js";
-import { AuthRequest } from "../middleware/auth.middleware.js";
-
-const habitService = new HabitService();
+import habitService from "../services/habit.service";
+import { AuthRequest } from "../middleware/auth.middleware";
 
 /**
  * GET /api/habits/dashboard
@@ -116,6 +114,7 @@ export const archiveHabit = async (req: AuthRequest, res: Response) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
 
 /**
  * DELETE /api/habits/:id
