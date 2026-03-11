@@ -4,15 +4,14 @@ import { HabitModal } from '../components/HabitModal';
 import { WeeklyHabitTracker } from '../components/WeeklyHabitTracker';
 import type { Habit } from '../types/api';
 import { 
-  Plus, 
-  Settings,
-  MoreHorizontal
+  Plus
 } from 'lucide-react';
 
 const HabitsPage: React.FC = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | undefined>(undefined);
 
   useEffect(() => {
     fetchHabits();
@@ -45,12 +44,17 @@ const HabitsPage: React.FC = () => {
       }));
       
       await habitService.toggleDay({ habitId, date });
-      // Final sync
+      // Final sync for stats
       await fetchHabits();
     } catch (err) {
       console.error(err);
       await fetchHabits();
     }
+  };
+
+  const handleEdit = (habit: Habit) => {
+    setEditingHabit(habit);
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (habitId: string) => {
@@ -61,6 +65,11 @@ const HabitsPage: React.FC = () => {
     } catch (err) {
       alert("Delete failed");
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingHabit(undefined);
   };
 
   if (loading) {
@@ -77,38 +86,31 @@ const HabitsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50/30 font-sans selection:bg-indigo-100 selection:text-indigo-900 pb-20">
       <div className="max-w-6xl mx-auto pt-12 px-6">
-        {/* Notion-style Header */}
-        <header className="mb-8 group">
+        <header className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4 text-gray-300 opacity-60 group-hover:opacity-100 transition-opacity">
-               <div className="p-1 hover:bg-gray-100 rounded cursor-pointer"><Settings className="w-5 h-5" /></div>
-               <div className="p-1 hover:bg-gray-100 rounded cursor-pointer"><MoreHorizontal className="w-5 h-5" /></div>
+            <div className="flex items-center gap-3">
+              <div className="text-4xl">📔</div>
+              <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Habit Tracker</h1>
             </div>
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold rounded shadow-sm transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[14px] font-semibold rounded-lg shadow-sm transition-all flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              New Habit
+              Add Habit
             </button>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="text-4xl">📔</div>
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Weekly Habit Tracker</h1>
           </div>
           <p className="mt-2 text-gray-500 font-medium text-[15px] border-b border-gray-200 pb-4">
             Track your daily discipline and monitor weekly progress at a glance.
           </p>
         </header>
 
-        {/* The Tracker Component */}
         <div className="mt-6">
           {habits.length === 0 ? (
             <div className="bg-white border-2 border-dashed border-gray-200 py-20 rounded-lg text-center">
                <div className="text-4xl mb-4 text-gray-300">🍃</div>
                <h3 className="text-lg font-semibold text-gray-700">No habits yet</h3>
-               <p className="text-gray-400 text-sm mb-6">Click "New Habit" to start tracking your journey.</p>
+               <p className="text-gray-400 text-sm mb-6">Start tracking your journey today.</p>
                <button 
                  onClick={() => setIsModalOpen(true)}
                  className="text-indigo-600 font-bold hover:underline"
@@ -121,17 +123,17 @@ const HabitsPage: React.FC = () => {
               <WeeklyHabitTracker 
                 habits={habits}
                 onToggle={handleToggle}
+                onEdit={handleEdit}
                 onDelete={handleDelete}
               />
             </div>
           )}
         </div>
 
-        {/* Legend / Footer */}
         <footer className="mt-8 flex items-center justify-between text-[12px] text-gray-400">
            <div className="flex gap-4">
              <div className="flex items-center gap-1.5">
-               <div className="w-2 h-2 rounded-full bg-indigo-500" />
+               <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
                <span>In Progress</span>
              </div>
              <div className="flex items-center gap-1.5">
@@ -140,14 +142,15 @@ const HabitsPage: React.FC = () => {
              </div>
            </div>
            <div>
-             Last updated: {new Date().toLocaleDateString()}
+             Last updated: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
            </div>
         </footer>
       </div>
 
       {isModalOpen && (
         <HabitModal 
-          onClose={() => setIsModalOpen(false)} 
+          habit={editingHabit}
+          onClose={handleCloseModal}
           onSuccess={fetchHabits} 
         />
       )}

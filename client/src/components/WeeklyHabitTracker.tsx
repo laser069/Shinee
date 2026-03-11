@@ -1,10 +1,11 @@
 import React from 'react';
-import { Check, Trash2 } from 'lucide-react';
+import { Check, Trash2, Edit2 } from 'lucide-react';
 import type { Habit } from '../types/api';
 
 interface WeeklyHabitTrackerProps {
   habits: Habit[];
   onToggle: (habitId: string, date: string) => void;
+  onEdit: (habit: Habit) => void;
   onDelete: (habitId: string) => void;
 }
 
@@ -19,7 +20,7 @@ const COLOR_MAP: Record<string, { bg: string; text: string; border: string; habi
   purple: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200', habitBg: 'bg-purple-50' },
 };
 
-export const WeeklyHabitTracker: React.FC<WeeklyHabitTrackerProps> = ({ habits, onToggle, onDelete }) => {
+export const WeeklyHabitTracker: React.FC<WeeklyHabitTrackerProps> = ({ habits, onToggle, onEdit, onDelete }) => {
   if (habits.length === 0) {
     return null;
   }
@@ -36,8 +37,8 @@ export const WeeklyHabitTracker: React.FC<WeeklyHabitTrackerProps> = ({ habits, 
                 {day}
               </th>
             ))}
-            <th className="p-3 font-medium w-40 text-left">Formula</th>
-            <th className="p-3 font-medium w-12 text-center"></th>
+            <th className="p-3 font-medium w-40 text-left">Progress</th>
+            <th className="p-3 font-medium w-24 text-center">Actions</th>
           </tr>
         </thead>
         <tbody className="text-sm">
@@ -46,30 +47,21 @@ export const WeeklyHabitTracker: React.FC<WeeklyHabitTrackerProps> = ({ habits, 
             
             return (
               <tr key={habit._id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors group">
-                {/* Habit Column */}
                 <td className="p-3">
                   <div className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      checked={true} // Repersents "Active" as per prompt
-                      readOnly
-                      className="w-3.5 h-3.5 rounded-sm border-gray-300 text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-default"
-                    />
-                    <div className={`px-1.5 py-0.5 rounded flex items-center gap-1.5 ${colors.habitBg}`}>
+                    <div className={`px-2 py-1 rounded flex items-center gap-2 ${colors.habitBg}`}>
                       <span className="text-base leading-none">{habit.ui?.icon || '🎯'}</span>
                       <span className="font-medium text-gray-700 text-[13px]">{habit.name}</span>
                     </div>
                   </div>
                 </td>
 
-                {/* Goal Column */}
                 <td className="p-3">
                   <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${colors.bg} ${colors.text}`}>
-                    {habit.goal?.weeklyTarget || habit.goal?.targetValue} x per week
+                    {habit.goal?.weeklyTarget || habit.goal?.targetValue} x week
                   </span>
                 </td>
                 
-                {/* Day Columns */}
                 {habit.grid?.map((dayObj, idx) => {
                   const isScheduled = dayObj.isScheduled;
                   const isCompleted = dayObj.isCompleted;
@@ -93,13 +85,10 @@ export const WeeklyHabitTracker: React.FC<WeeklyHabitTrackerProps> = ({ habits, 
                   );
                 })}
 
-                {/* Formula Column (Progress) */}
-                <td className="p-3">
+                <td className="p-3 text-[12px] font-semibold text-gray-500">
                   <div className="flex items-center gap-3">
-                    <span className="text-[12px] font-semibold text-gray-500 w-8 tabular-nums">
-                      {habit.weeklyProgress || 0}%
-                    </span>
-                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <span className="w-8 tabular-nums">{habit.weeklyProgress || 0}%</span>
+                    <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-emerald-500 rounded-full transition-all duration-700 ease-out" 
                         style={{ width: `${habit.weeklyProgress || 0}%` }}
@@ -108,14 +97,23 @@ export const WeeklyHabitTracker: React.FC<WeeklyHabitTrackerProps> = ({ habits, 
                   </div>
                 </td>
 
-                {/* Actions */}
                 <td className="p-3 text-center">
-                   <button 
-                    onClick={() => onDelete(habit._id)}
-                    className="p-1 text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                   <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <button 
+                      onClick={() => onEdit(habit)}
+                      className="p-1 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 rounded"
+                      title="Edit Habit"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={() => onDelete(habit._id)}
+                      className="p-1 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded"
+                      title="Delete Habit"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                   </div>
                 </td>
               </tr>
             );

@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Navbar } from './components/Navbar';
 import { LoginPage } from './pages/LoginPage';
@@ -75,26 +75,35 @@ function App() {
 }
 
 // Separate the Hero into a component for cleanliness
-const HomeHero = () => (
-  <div className="text-center animate-in fade-in zoom-in duration-700">
-    <h1 className="text-6xl md:text-8xl font-black text-white mb-8 tracking-tighter">
-      UNLIMITED <br /> 
-      <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-        POSSIBILITIES.
-      </span>
-    </h1>
-    <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-      Experience the next generation of web management. Clean, fast, and fully responsive from edge to edge.
-    </p>
-    <div className="flex flex-wrap justify-center gap-4">
-       <button className="px-10 py-4 bg-white text-slate-900 font-bold rounded-2xl hover:bg-slate-200 transition-all shadow-xl shadow-white/5">
-         Get Started Today
-       </button>
-       <button className="px-10 py-4 bg-slate-800 text-white font-bold rounded-2xl border border-slate-700 hover:bg-slate-700 transition-all">
-         View Documentation
-       </button>
+const HomeHero = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="text-center animate-in fade-in zoom-in duration-700">
+      <h1 className="text-6xl md:text-8xl font-black text-white mb-8 tracking-tighter">
+        MASTER YOUR <br /> 
+        <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent">
+          ROUTINE.
+        </span>
+      </h1>
+      <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
+        The ultimate productivity hub. Manage high-intensity Kanban boards and professional Notion-style habit trackers in one unified workspace.
+      </p>
+      <div className="flex flex-wrap justify-center gap-4">
+         <button 
+           onClick={() => navigate('/register')}
+           className="px-10 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20"
+         >
+           Get Started Today
+         </button>
+         <button 
+           onClick={() => navigate('/login')}
+           className="px-10 py-4 bg-slate-800 text-white font-bold rounded-2xl border border-slate-700 hover:bg-slate-700 transition-all"
+         >
+           Sign In
+         </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default App; 

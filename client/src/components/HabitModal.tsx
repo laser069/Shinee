@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import habitService from '../services/habitService';
-import type { HabitCategory } from '../types/api';
+import type { Habit, HabitCategory } from '../types/api';
 
 interface HabitModalProps {
+  habit?: Habit; // If provided, we are in Edit mode
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -10,16 +11,18 @@ interface HabitModalProps {
 const COLORS = ['indigo', 'rose', 'emerald', 'amber', 'blue', 'purple'];
 const ICONS = ['🎯', '💧', '📚', '🧘', '🏃', '🥗', '💻', '💤', '💰', '🧠'];
 
-export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) => {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<HabitCategory>('Growth');
-  const [icon, setIcon] = useState('🎯');
-  const [color, setColor] = useState('indigo');
-  const [targetValue, setTargetValue] = useState(1);
-  const [weeklyTarget, setWeeklyTarget] = useState(5);
-  const [unit, setUnit] = useState('times');
-  const [scheduledDays, setScheduledDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon-Fri
+export const HabitModal: React.FC<HabitModalProps> = ({ habit, onClose, onSuccess }) => {
+  const [name, setName] = useState(habit?.name || '');
+  const [category, setCategory] = useState<HabitCategory>(habit?.category || 'Growth');
+  const [icon, setIcon] = useState(habit?.ui?.icon || '🎯');
+  const [color, setColor] = useState(habit?.ui?.color || 'indigo');
+  const [targetValue, setTargetValue] = useState(habit?.goal?.targetValue || 1);
+  const [weeklyTarget, setWeeklyTarget] = useState(habit?.goal?.weeklyTarget || 5);
+  const [unit, setUnit] = useState(habit?.goal?.unit || 'times');
+  const [scheduledDays, setScheduledDays] = useState<number[]>(habit?.goal?.scheduledDays || [1, 2, 3, 4, 5]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isEdit = !!habit;
 
   const toggleDay = (day: number) => {
     setScheduledDays(prev => 
@@ -31,24 +34,30 @@ export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) =>
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await habitService.createHabit({
+      const payload = {
         name,
         category,
         ui: { icon, color },
         goal: {
-          type: 'boolean',
+          type: 'boolean' as const,
           targetValue,
           unit,
-          frequency: 'daily',
+          frequency: 'daily' as const,
           scheduledDays,
           weeklyTarget,
-          difficulty: 'medium'
+          difficulty: 'medium' as const
         }
-      } as any);
+      };
+
+      if (isEdit && habit) {
+        await habitService.updateHabit(habit._id, payload);
+      } else {
+        await habitService.createHabit(payload as any);
+      }
       onSuccess();
       onClose();
     } catch (err) {
-      alert("Failed to create habit");
+      alert(`Failed to ${isEdit ? 'update' : 'create'} habit`);
     } finally {
       setIsSubmitting(false);
     }
@@ -58,14 +67,15 @@ export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) =>
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-[#1e293b] border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl p-6 animate-in zoom-in duration-200 overflow-y-auto max-h-[90vh]">
         <header className="flex justify-between items-center mb-6 sticky top-0 bg-[#1e293b] py-2 z-10">
-          <h2 className="text-2xl font-bold text-white tracking-tight">New Habit</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">
+            {isEdit ? 'Update Habit' : 'New Habit'}
+          </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             ✕
           </button>
         </header>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Name & Icon */}
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Habit Name</label>
@@ -89,7 +99,6 @@ export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) =>
             </div>
           </div>
 
-          {/* Color Selection */}
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2 ml-1">Color Theme</label>
             <div className="flex gap-3">
@@ -113,7 +122,6 @@ export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) =>
             </div>
           </div>
 
-          {/* Category */}
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Category</label>
             <select 
@@ -127,10 +135,10 @@ export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) =>
               <option value="Social">🤝 Social</option>
               <option value="Finance">💰 Finance</option>
               <option value="Mind">🧘 Mind</option>
+              <option value="Milestone">🎯 Milestone</option>
             </select>
           </div>
 
-          {/* Scheduling */}
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2 ml-1">Scheduled Days</label>
             <div className="flex justify-between gap-1">
@@ -164,16 +172,14 @@ export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) =>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Weekly Target</label>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="number"
-                  min="1"
-                  max="7"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  value={weeklyTarget}
-                  onChange={(e) => setWeeklyTarget(Number(e.target.value))}
-                />
-              </div>
+              <input 
+                type="number"
+                min="1"
+                max="7"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                value={weeklyTarget}
+                onChange={(e) => setWeeklyTarget(Number(e.target.value))}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-400 mb-1.5 ml-1">Unit</label>
@@ -199,7 +205,7 @@ export const HabitModal: React.FC<HabitModalProps> = ({ onClose, onSuccess }) =>
               disabled={isSubmitting}
               className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
             >
-              {isSubmitting ? 'Creating...' : 'Create Habit'}
+              {isSubmitting ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update Habit' : 'Create Habit')}
             </button>
           </div>
         </form>

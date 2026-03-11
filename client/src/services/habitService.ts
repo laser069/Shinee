@@ -1,8 +1,6 @@
 import apiClient from '../lib/apiClient';
 import type { 
   Habit, 
-  HabitLog, 
-  HabitStats, 
   HabitCategory, 
   HabitTrackingType 
 } from '../types/api';
@@ -43,6 +41,11 @@ export const createHabit = async (payload: CreateHabitPayload): Promise<Habit> =
   return response.data.data;
 };
 
+export const updateHabit = async (id: string, payload: Partial<CreateHabitPayload>): Promise<Habit> => {
+  const response = await apiClient.patch<{ success: boolean, data: Habit }>(HABIT_ENDPOINTS.BY_ID(id), payload);
+  return response.data.data;
+};
+
 export const toggleDay = async (payload: ToggleDayPayload): Promise<{ status: string }> => {
   const response = await apiClient.post<{ success: boolean, data: { status: string } }>(HABIT_ENDPOINTS.TOGGLE, payload);
   return response.data.data;
@@ -55,6 +58,7 @@ export const deleteHabit = async (id: string): Promise<void> => {
 const habitService = {
   getHabitsDashboard,
   createHabit,
+  updateHabit,
   toggleDay,
   deleteHabit
 };

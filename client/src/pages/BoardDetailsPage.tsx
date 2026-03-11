@@ -161,10 +161,17 @@ const BoardPage: React.FC = () => {
                                 </div>
                                 <p className="text-sm text-slate-400 line-clamp-3 leading-relaxed">{task.description}</p>
                                 
-                                <div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-700/50">
-                                  <span className="text-[10px] text-slate-500 font-medium">#{task._id.slice(-4)}</span>
+                                <div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-700/50 text-[11px] text-slate-500 font-medium">
+                                  <div className="flex items-center gap-2">
+                                     <span className="opacity-40">#{task._id.slice(-4)}</span>
+                                     <span>{new Date(task.createdAt || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                                  </div>
                                   <div className="flex -space-x-2">
-                                    <div className="w-6 h-6 rounded-full bg-indigo-600 border-2 border-slate-800 flex items-center justify-center text-[10px] font-bold text-white">
+                                    <div className="w-6 h-6 rounded-full bg-indigo-600 border-2 border-slate-800 flex items-center justify-center text-[10px] font-bold text-white shadow-sm ring-1 ring-white/10" title="Assigned to you">
+                                      {/* Using first letter of app name if user not detailed, or just a placeholder 'J' for Doe? 
+                                          Actually let's just use a sleek user icon if we don't have the name per task */}
+                                      {/* We have the global user in context, let's use that if we can. 
+                                          For now let's just use the first letter of 'Nexus' or stay with a cleaner 'U' for User */}
                                       U
                                     </div>
                                   </div>
