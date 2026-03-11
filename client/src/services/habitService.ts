@@ -36,28 +36,28 @@ const HABIT_ENDPOINTS = {
 };
 
 export const getHabitsDashboard = async (): Promise<Habit[]> => {
-  const response = await apiClient.get<Habit[]>(HABIT_ENDPOINTS.BASE);
-  return response.data;
+  const response = await apiClient.get<{ success: boolean, data: Habit[] }>(HABIT_ENDPOINTS.BASE);
+  return response.data.data;
 };
 
 export const createHabit = async (payload: CreateHabitPayload): Promise<Habit> => {
-  const response = await apiClient.post<Habit>(HABIT_ENDPOINTS.BASE, payload);
-  return response.data;
+  const response = await apiClient.post<{ success: boolean, data: Habit }>(HABIT_ENDPOINTS.BASE, payload);
+  return response.data.data;
 };
 
 export const logActivity = async (payload: LogActivityPayload): Promise<HabitLog> => {
-  const response = await apiClient.post<HabitLog>(HABIT_ENDPOINTS.LOG, payload);
-  return response.data;
+  const response = await apiClient.post<{ success: boolean, data: HabitLog }>(HABIT_ENDPOINTS.LOG, payload);
+  return response.data.data;
 };
 
 export const handleRelapse = async (id: string): Promise<Habit> => {
-  const response = await apiClient.patch<Habit>(HABIT_ENDPOINTS.RELAPSE(id));
-  return response.data;
+  const response = await apiClient.patch<{ success: boolean, data: Habit }>(HABIT_ENDPOINTS.RELAPSE(id));
+  return response.data.data;
 };
 
 export const getHabitStats = async (id: string): Promise<HabitStats> => {
-  const response = await apiClient.get<HabitStats>(HABIT_ENDPOINTS.STATS(id));
-  return response.data;
+  const response = await apiClient.get<{ success: boolean, data: HabitStats }>(HABIT_ENDPOINTS.STATS(id));
+  return response.data.data;
 };
 
 const habitService = {
