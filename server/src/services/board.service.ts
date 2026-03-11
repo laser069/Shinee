@@ -17,7 +17,10 @@ class BoardService {
   }
 
   async getBoardById(boardId: string, userId: string) {
-    return await Board.findOne({ _id: boardId, user: userId }).populate('tasks');
+    return await Board.findOne({ _id: boardId, user: userId }).populate({
+      path: 'tasks',
+      options: { sort: { createdAt: -1 } }
+    });
   }
 
   async deleteBoard(boardId: string, userId: string) {

@@ -22,12 +22,19 @@ const BoardPage: React.FC = () => {
   const fetchBoardDetails = async () => {
     try {
       setLoading(true);
-      const [boardData, boardTasks] = await Promise.all([
-        boardService.getBoardById(id!),
-        taskService.getTasks(id!), // Fetch tasks specifically for this board
-      ]);
+      const boardData = await boardService.getBoardById(id!);
       setBoard(boardData);
-      setTasks(boardTasks);
+      
+      // The backend populates tasks, so we can cast boardData.tasks to Task[]
+      // We also ensure we're only setting tasks that belong to this board
+      const boardTasks = (boardData.tasks as unknown as Task[]) || [];
+      // Sort tasks by createdAt (newest first)
+      const sortedTasks = [...boardTasks].sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+      setTasks(sortedTasks);
     } catch (err) {
       console.error('Error fetching board details:', err);
     } finally {
@@ -39,68 +46,77 @@ const BoardPage: React.FC = () => {
   const onDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
-    // 1. If dropped outside a list or in the same spot, do nothing
     if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) {
       return;
     }
 
     const newStatus = destination.droppableId as TaskStatus;
-
-    // 2. Optimistic UI Update
-    // We update the local state immediately so the drag feels snappy
     const originalTasks = [...tasks];
+    
+    // Optimistic Update
     const updatedTasks = tasks.map(task => 
       task._id === draggableId ? { ...task, status: newStatus } : task
     );
-    
     setTasks(updatedTasks);
 
-    // 3. Persist to Backend
     try {
       await taskService.updateTask(draggableId, { status: newStatus });
     } catch (err) {
       console.error('Failed to update task status:', err);
       alert("Failed to sync move to server. Rolling back...");
-      setTasks(originalTasks); // Rollback on error
+      setTasks(originalTasks);
     }
   };
 
   if (loading) return (
-    <div className="p-10 flex flex-col items-center justify-center h-full text-slate-400">
+    <div className="flex flex-col items-center justify-center h-full text-slate-400 bg-[#0f172a]">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
       <p className="text-xl font-medium">Loading board...</p>
     </div>
   );
 
-  if (!board) return <div className="p-10 text-white text-center">Board not found</div>;
+  if (!board) return (
+    <div className="flex items-center justify-center h-full text-white bg-[#0f172a]">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold mb-2">Board not found</h2>
+        <p className="text-slate-400">The board you're looking for might have been deleted.</p>
+      </div>
+    </div>
+  );
 
-  const columns: { id: TaskStatus; label: string }[] = [
-    { id: 'todo', label: 'To Do' },
-    { id: 'inprogress', label: 'In Progress' },
-    { id: 'done', label: 'Done' }
+  const columns: { id: TaskStatus; label: string; color: string }[] = [
+    { id: 'todo', label: 'To Do', color: 'bg-slate-500' },
+    { id: 'inprogress', label: 'In Progress', color: 'bg-amber-500' },
+    { id: 'done', label: 'Done', color: 'bg-emerald-500' }
   ];
 
   return (
-    <div className="p-6 h-[calc(100vh-80px)] flex flex-col overflow-hidden">
-      <header className="flex justify-between items-center mb-8">
+    <div className="h-full flex flex-col bg-[#0f172a] overflow-hidden">
+      <header className="flex justify-between items-center px-8 py-6 flex-shrink-0">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight">{board.title}</h1>
-          <p className="text-slate-400 text-sm mt-1">Manage your tasks and track progress</p>
+          <p className="text-slate-400 text-sm mt-1 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Active Workspace
+          </p>
         </div>
         <button 
           onClick={() => { setActiveStatus('todo'); setIsModalOpen(true); }} 
-          className="bg-indigo-600 hover:bg-indigo-500 transition-all px-6 py-2.5 rounded-xl font-bold text-white shadow-lg shadow-indigo-600/20 flex items-center gap-2"
+          className="bg-indigo-600 hover:bg-indigo-500 transition-all px-6 py-2.5 rounded-xl font-bold text-white shadow-lg shadow-indigo-600/20 flex items-center gap-2 group"
         >
-          <span className="text-xl">+</span> New Task
+          <span className="text-xl group-hover:rotate-90 transition-transform duration-300">+</span> New Task
         </button>
       </header>
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-6 flex-1 overflow-x-auto pb-6 scrollbar-hide">
+        <div className="flex gap-6 flex-1 overflow-x-auto px-8 pb-8 scrollbar-hide">
           {columns.map(column => (
-            <div key={column.id} className="w-85 flex flex-col flex-shrink-0">
+            <div key={column.id} className="w-85 flex flex-col flex-shrink-0 h-full">
               <div className="flex items-center justify-between mb-4 px-2">
-                <h3 className="font-bold text-slate-400 uppercase text-xs tracking-widest">{column.label}</h3>
+                <div className="flex items-center gap-2">
+                   <div className={`w-1.5 h-1.5 rounded-full ${column.color}`} />
+                   <h3 className="font-bold text-slate-400 uppercase text-xs tracking-widest">{column.label}</h3>
+                </div>
                 <span className="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded-full font-bold">
                   {tasks.filter(t => t.status === column.id).length}
                 </span>
@@ -111,50 +127,53 @@ const BoardPage: React.FC = () => {
                   <div
                     {...provided.droppableProps}
                     ref={provided.innerRef}
-                    className={`flex-1 rounded-2xl p-3 transition-all duration-300 min-h-[500px] ${
+                    className={`flex-1 rounded-2xl p-3 transition-all duration-300 overflow-y-auto overflow-x-hidden scrollbar-hide ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-800/60 border-2 border-dashed border-indigo-500/40 ring-4 ring-indigo-500/5' 
                         : 'bg-slate-900/40 border-2 border-transparent'
                     }`}
+                    style={{ minHeight: '100px' }}
                     onDoubleClick={() => { setActiveStatus(column.id); setIsModalOpen(true); }}
                   >
-                    {tasks
-                      .filter(t => t.status === column.id)
-                      .map((task, index) => (
-                        <Draggable key={task._id} draggableId={task._id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              style={{ ...provided.draggableProps.style }}
-                              className={`bg-slate-800 border p-4 rounded-xl shadow-lg mb-4 transition-all group hover:border-indigo-500/50 ${
-                                snapshot.isDragging 
-                                  ? 'border-indigo-500 shadow-xl shadow-indigo-500/20 scale-105 rotate-2 z-50' 
-                                  : 'border-slate-700/50'
-                              }`}
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-bold text-white group-hover:text-indigo-400 transition-colors uppercase text-sm tracking-wide">{task.title}</h4>
-                                <div className={`w-2 h-2 rounded-full ${
-                                  task.status === 'done' ? 'bg-emerald-500' : 
-                                  task.status === 'inprogress' ? 'bg-amber-500' : 'bg-slate-500'
-                                }`} />
-                              </div>
-                              <p className="text-sm text-slate-400 line-clamp-3 leading-relaxed">{task.description}</p>
-                              
-                              <div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-700/50">
-                                <span className="text-[10px] text-slate-500 font-medium">#{task._id.slice(-4)}</span>
-                                <div className="flex -space-x-2">
-                                  <div className="w-6 h-6 rounded-full bg-indigo-600 border-2 border-slate-800 flex items-center justify-center text-[10px] font-bold text-white">
-                                    U
+                    <div className="flex flex-col gap-4">
+                      {tasks
+                        .filter(t => t.status === column.id)
+                        .map((task, index) => (
+                          <Draggable key={task._id} draggableId={task._id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={{ ...provided.draggableProps.style }}
+                                className={`bg-slate-800 border p-4 rounded-xl shadow-lg transition-all group hover:border-indigo-500/50 ${
+                                  snapshot.isDragging 
+                                    ? 'border-indigo-500 shadow-xl shadow-indigo-500/20 scale-105 rotate-1 z-50' 
+                                    : 'border-slate-700/50'
+                                }`}
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <h4 className="font-bold text-white group-hover:text-indigo-400 transition-colors uppercase text-sm tracking-wide">{task.title}</h4>
+                                  <div className={`w-2 h-2 rounded-full ${
+                                    task.status === 'done' ? 'bg-emerald-500' : 
+                                    task.status === 'inprogress' ? 'bg-amber-500' : 'bg-slate-500'
+                                  }`} />
+                                </div>
+                                <p className="text-sm text-slate-400 line-clamp-3 leading-relaxed">{task.description}</p>
+                                
+                                <div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-700/50">
+                                  <span className="text-[10px] text-slate-500 font-medium">#{task._id.slice(-4)}</span>
+                                  <div className="flex -space-x-2">
+                                    <div className="w-6 h-6 rounded-full bg-indigo-600 border-2 border-slate-800 flex items-center justify-center text-[10px] font-bold text-white">
+                                      U
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
+                            )}
+                          </Draggable>
+                        ))}
+                    </div>
                     {provided.placeholder}
                   </div>
                 )}
