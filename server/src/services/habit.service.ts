@@ -95,6 +95,30 @@ export class HabitService {
 
     return { daysSince, habit };
   }
+  /**
+   * Get all habits for a specific user to populate the dashboard
+   */
+  async getHabitProgress(userId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const habits = await Habit.find({ userId }) as IHabit[];
+    
+    // Optional: Fetch today's logs to show checkmarks on the dashboard
+    const todayLogs = await Log.find({
+      userId,
+      date: today
+    });
+
+    return habits.map(habit => {
+      const log = todayLogs.find(l => l.habitId.toString() === habit._id.toString());
+      return {
+        ...habit.toObject(),
+        todayProgress: log ? log.value : 0,
+        isCompletedToday: log ? log.value >= habit.goal.targetValue : false
+      };
+    });
+  }
 
   /**
    * Reset 'Quit' habit
