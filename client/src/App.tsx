@@ -1,5 +1,4 @@
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Navbar } from './components/Navbar';
 import { LoginPage } from './pages/LoginPage';
@@ -9,55 +8,55 @@ import BoardDetailsPage from './pages/BoardDetailsPage';
 import DashboardPage from './pages/DashboardPage';
 
 function App() {
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate(); // Use the hook instead of window.history
-
   return (
     <div className="min-h-screen w-full bg-[#0f172a] text-slate-200 overflow-x-hidden">
       <Navbar />
 
-      <main className="w-full min-h-[calc(100vh-80px)] relative flex flex-col items-center justify-center">
+       <main className="w-full relative flex-1">
         {/* Visual Background Flair */}
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-        <div className="w-full max-w-7xl px-6 py-12">
-          {/* REPLACE THE CONDITIONAL RENDERING WITH THIS: */}
-<Routes>
-  {/* Public Routes */}
-  <Route path="/" element={<HomeHero />} />
-  <Route path="/login" element={<LoginPage />} />
-  <Route path="/register" element={<RegisterPage />} />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<div className="w-full max-w-7xl mx-auto px-6 py-12"><HomeHero /></div>} />
+          <Route path="/login" element={<div className="w-full max-w-lg mx-auto px-6 py-12"><LoginPage /></div>} />
+          <Route path="/register" element={<div className="w-full max-w-lg mx-auto px-6 py-12"><RegisterPage /></div>} />
 
-  {/* Protected Application Routes */}
-  <Route 
-    path="/dashboard" 
-    element={
-      <ProtectedRoute>
-        <DashboardPage />
-      </ProtectedRoute>
-    } 
-  />
-  
-  <Route 
-    path="/board/:id" 
-    element={
-      <ProtectedRoute>
-        <BoardDetailsPage />
-      </ProtectedRoute>
-    } 
-  />
+          {/* Protected Application Routes */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <div className="w-full max-w-7xl mx-auto px-6 py-12">
+                  <DashboardPage />
+                </div>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/board/:id" 
+            element={
+              <ProtectedRoute>
+                <div className="w-full h-[calc(100vh-80px)]">
+                  <BoardDetailsPage />
+                </div>
+              </ProtectedRoute>
+            } 
+          />
 
-  <Route 
-    path="/profile" 
-    element={
-      <ProtectedRoute>
-        <ProfilePage />
-      </ProtectedRoute>
-    } 
-  />
-</Routes>
-        </div>
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <div className="w-full max-w-4xl mx-auto px-6 py-12">
+                  <ProfilePage />
+                </div>
+              </ProtectedRoute>
+            } 
+          />
+        </Routes>
       </main>
     </div>
   );
