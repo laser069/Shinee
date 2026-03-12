@@ -8,28 +8,26 @@ import { Plus, Loader2, ChevronLeft, Clock, Timer, AlertCircle } from 'lucide-re
 import type { Board, Task, TaskStatus } from '../types';
 
 // --- SUB-COMPONENT: REAL-TIME ANALYTICS ---
-// This handles the "ticking" so the whole board doesn't re-render every second.
 const TaskAnalytics: React.FC<{ task: Task }> = ({ task }) => {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     let interval: any;
     if (task.status === 'inprogress' && task.activeStartTime) {
-      // Refresh 'now' immediately so we don't start with a stale mount-time timestamp
       setNow(Date.now());
       interval = setInterval(() => setNow(Date.now()), 1000);
     }
     return () => clearInterval(interval);
   }, [task.status, task.activeStartTime]);
 
-  // Calculations
   const currentSession = task.activeStartTime ? Math.max(0, now - new Date(task.activeStartTime).getTime()) : 0;
   const totalMs = (task.totalTimeSpent || 0) + currentSession;
-  const target = task.targetDuration || 7200000; // Default 2h
+  const target = task.targetDuration || 7200000;
   const progress = Math.min(100, (totalMs / target) * 100);
   
-  // Time Debt Logic: Predictive warning if current pace makes deadline impossible
   const timeRemainingInGoal = Math.max(0, target - totalMs);
+  const overGoal = totalMs > target;
+  
   const projectedFinish = now + timeRemainingInGoal;
   const isInDebt = task.dueDate ? projectedFinish > new Date(task.dueDate).getTime() : false;
 
@@ -41,32 +39,86 @@ const TaskAnalytics: React.FC<{ task: Task }> = ({ task }) => {
   };
 
   return (
-    <div className="mt-3 space-y-2">
-      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter">
-        <div className="flex items-center gap-1">
-          <Timer className={`w-3 h-3 ${task.status === 'inprogress' ? 'text-indigo-400 animate-pulse' : 'text-slate-600'}`} />
-          <span className={task.status === 'inprogress' ? "text-indigo-400" : "text-slate-600"}>
-            {format(totalMs)}
+    <div className="mt-4 space-y-2">
+      <div className="flex justify-between items-end">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
+            {overGoal ? 'Over Goal' : 'Goal Countdown'}
           </span>
+          <div className="flex items-center gap-1.5">
+            <Timer className={`w-3.5 h-3.5 ${task.status === 'inprogress' ? 'text-indigo-400 animate-pulse' : 'text-slate-600'}`} />
+            <span className={`text-xs font-mono font-bold ${
+              task.status === 'inprogress' 
+                ? (overGoal ? 'text-red-400' : 'text-indigo-400') 
+                : 'text-slate-500'
+            }`}>
+              {format(overGoal ? totalMs - target : timeRemainingInGoal)}
+            </span>
+          </div>
         </div>
+        
         {isInDebt && task.status !== 'done' && (
-          <span className="text-orange-500 flex items-center gap-1 animate-pulse">
-            <AlertCircle className="w-3 h-3" /> Time Debt
-          </span>
+          <div className="flex flex-col items-end gap-0.5 group">
+            <span className="text-[8px] font-black text-orange-500 uppercase tracking-widest animate-pulse">Time Debt</span>
+            <AlertCircle className="w-3.5 h-3.5 text-orange-500 animate-bounce" />
+          </div>
         )}
       </div>
-      <div className="h-1 w-full bg-slate-800/50 rounded-full overflow-hidden border border-slate-700/30">
+
+      <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800/50 shadow-inner">
         <div 
-          className={`h-full transition-all duration-1000 shadow-[0_0_10px_rgba(0,0,0,0.5)] ${
-            totalMs > target ? 'bg-red-500 shadow-red-500/20' : isInDebt ? 'bg-orange-500 shadow-orange-500/20 animate-pulse' : 'bg-indigo-500 shadow-indigo-500/20'
+          className={`h-full transition-all duration-1000 relative ${
+            overGoal ? 'bg-red-500' : isInDebt ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.3)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.3)]'
           }`}
           style={{ width: `${progress}%` }}
-        />
+        >
+          {task.status === 'inprogress' && (
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
+// --- SUB-COMPONENT: DEADLINE COUNTDOWN ---
+const DeadlineCountdown: React.FC<{ dueDate: string; status: TaskStatus }> = ({ dueDate, status }) => {
+  const [text, setText] = useState('');
+  const [isUrgent, setIsUrgent] = useState(false);
+
+  useEffect(() => {
+    const update = () => {
+      const diff = new Date(dueDate).getTime() - Date.now();
+      if (diff < 0) {
+        setText('Past Due');
+        setIsUrgent(status !== 'done');
+        return;
+      }
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(hours / 24);
+
+      if (days > 0) setText(`${days}d left`);
+      else if (hours > 0) setText(`${hours}h left`);
+      else setText(`${Math.floor(diff / 60000)}m left`);
+      
+      setIsUrgent(hours < 12 && status !== 'done');
+    };
+    update();
+    const interval = setInterval(update, 60000);
+    return () => clearInterval(interval);
+  }, [dueDate, status]);
+
+  return (
+    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[8px] font-black uppercase tracking-widest ${
+      isUrgent ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-slate-800/50 border-slate-700/50 text-slate-500'
+    }`}>
+      <Clock className="w-2.5 h-2.5" />
+      {text}
+    </div>
+  );
+};
+
+// --- MAIN BOARD PAGE ---
 const BoardPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [board, setBoard] = useState<Board | null>(null);
@@ -160,8 +212,6 @@ const BoardPage: React.FC = () => {
         </div>
       </header>
 
-      
-
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-6 px-8 pb-8 flex-1 overflow-x-auto">
           {columns.map(column => (
@@ -188,6 +238,7 @@ const BoardPage: React.FC = () => {
                       snapshot.isDraggingOver ? 'bg-slate-900/40' : 'bg-transparent'
                     }`}
                   >
+
                     {tasks.filter(t => t.status === column.id).map((task, index) => (
                       <Draggable key={task._id} draggableId={task._id} index={index}>
                         {(provided, snapshot) => (
@@ -196,32 +247,19 @@ const BoardPage: React.FC = () => {
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
                             onDoubleClick={(e) => handleOpenEdit(e, task)}
-                            className={`bg-[#161b26] border border-slate-800/40 p-4 rounded-xl mb-3 cursor-pointer hover:border-indigo-500/50 transition-all ${
-                              snapshot.isDragging ? 'shadow-2xl ring-1 ring-indigo-500 bg-[#1c2331]' : ''
+                            className={`bg-[#161b26] border border-slate-800/40 p-4 rounded-2xl mb-3 cursor-pointer hover:border-indigo-500/50 transition-all ${
+                              snapshot.isDragging ? 'shadow-2xl ring-1 ring-indigo-500 bg-[#1c2331]' : 'hover:translate-y-[-2px]'
                             }`}
                           >
-                            <h4 className="text-[13px] font-semibold text-slate-200">{task.title}</h4>
-                            <p className="text-[11px] text-slate-500 line-clamp-2 mt-1">{task.description}</p>
+                            <div className="flex justify-between items-start gap-4 mb-2">
+                              <h4 className="text-[13px] font-bold text-slate-100 leading-tight flex-1">{task.title}</h4>
+                              {task.dueDate && <DeadlineCountdown dueDate={task.dueDate} status={task.status} />}
+                            </div>
+                            
+                            <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">{task.description}</p>
                             
                             {/* THE ANALYTICS ENGINE */}
                             <TaskAnalytics task={task} />
-
-                            {/* Deadline Display */}
-                            {task.dueDate && (
-                              <div className={`mt-3 flex items-center gap-1.5 text-[10px] font-black uppercase ${
-                                task.status !== 'done' && new Date(task.dueDate) < new Date() 
-                                  ? 'text-red-400' 
-                                  : 'text-slate-600'
-                              }`}>
-                                <Clock className="w-3 h-3" />
-                                {new Date(task.dueDate).toLocaleString([], { 
-                                  month: 'short', 
-                                  day: 'numeric', 
-                                  hour: '2-digit', 
-                                  minute: '2-digit' 
-                                })}
-                              </div>
-                            )}
                           </div>
                         )}
                       </Draggable>
