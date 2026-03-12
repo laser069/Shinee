@@ -1,110 +1,142 @@
 import React from 'react';
-import { Check, Flame } from 'lucide-react';
-import type { DashboardItem, Habit } from '../types';
+import { Check, Flame, MoreHorizontal } from 'lucide-react';
+import type { DashboardItem } from '../types';
 
 interface Props {
   items: DashboardItem[];
   onToggle: (id: string, dayIdx: number) => void;
+  onEdit: (habit: any) => void; // Added for the pro-spreadsheet feel
 }
 
-// Helper: Monday-aligned index
 const getTodayIndex = () => (new Date().getDay() + 6) % 7;
 
 const HabitRow: React.FC<{
   item: DashboardItem;
   todayIdx: number;
   onToggle: (id: string, idx: number) => void;
-}> = ({ item, todayIdx, onToggle }) => {
+  onEdit: (habit: any) => void;
+}> = ({ item, todayIdx, onToggle, onEdit }) => {
   const { habit, currentLog } = item;
-
+  
   return (
-    <div className="group flex items-center py-8 px-6 hover:bg-white/[0.02] rounded-[2.5rem] transition-all duration-300">
+    <div className="group flex items-center border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
       
-      {/* 1. Large Readable Identity */}
-      <div className="w-[400px] flex items-center gap-8">
-        <span className="text-5xl">{habit.icon}</span>
-        <div className="flex flex-col gap-1">
-          {/* Hero Text: Big & Clear */}
-          <h3 className="text-3xl font-extrabold text-white tracking-tight">
+      {/* 1. Identity Column */}
+      <div className="w-72 flex items-center gap-3 py-2 px-4 border-r border-slate-800/50">
+        <span className="text-base grayscale group-hover:grayscale-0 transition-all">
+          {habit.icon}
+        </span>
+        <div className="flex flex-col min-w-0">
+          <h3 className="text-[13px] font-medium text-slate-200 truncate leading-tight">
             {habit.name}
           </h3>
-          
-          {/* Subtext: Simple explanation */}
-          <div className="flex items-center gap-5 mt-1">
-            <div className="flex items-center gap-1.5 text-orange-500">
-              <Flame size={14} fill="currentColor" />
-              <span className="text-sm font-bold">{habit.dailyStreak} day streak</span>
+          <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-center gap-1">
+              <Flame size={10} className="text-orange-500/70" />
+              <span className="text-[10px] font-medium text-slate-500 tabular-nums">
+                {habit.dailyStreak}d
+              </span>
             </div>
-            <div className="h-1 w-1 rounded-full bg-slate-700" />
-            <span className="text-sm font-medium text-slate-500">
-              Goal: {habit.goalCount} times this week
-            </span>
           </div>
         </div>
       </div>
 
-      {/* 2. Minimalist Grid (Small Checkboxes) */}
-      <div className="flex-1 flex justify-center gap-3">
+      {/* 2. Spreadsheet Grid */}
+      <div className="flex-1 grid grid-cols-7 h-full">
         {[0, 1, 2, 3, 4, 5, 6].map((idx) => {
           const isDone = currentLog.days[idx]?.completed;
           const isToday = idx === todayIdx;
           const isScheduled = habit.frequencyType === 'fixed' ? habit.fixedDays.includes(idx) : true;
 
           return (
-            <button
-              key={idx}
-              disabled={!isScheduled}
-              onClick={() => onToggle(habit._id, idx)}
-              className={`
-                relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500
-                ${isDone 
-                  ? 'bg-emerald-500 text-slate-900 shadow-lg shadow-emerald-500/20' 
-                  : isScheduled 
-                    ? 'bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800' 
-                    : 'opacity-10 cursor-not-allowed'
-                }
-                ${isToday && !isDone && isScheduled ? 'border-indigo-500 border-2' : ''}
-              `}
+            <div 
+              key={idx} 
+              className={`flex items-center justify-center border-r border-slate-800/30 last:border-r-0 py-2
+                ${isToday ? 'bg-indigo-500/[0.03]' : ''}`}
             >
-              {isDone ? <Check size={18} strokeWidth={4} /> : null}
-            </button>
+              <button
+                disabled={!isScheduled}
+                onClick={() => onToggle(habit._id, idx)}
+                className={`
+                  w-5 h-5 rounded-[4px] flex items-center justify-center transition-all
+                  ${isDone 
+                    ? 'bg-indigo-500 text-white shadow-sm' 
+                    : isScheduled 
+                      ? 'border border-slate-700 hover:border-slate-500 bg-transparent' 
+                      : 'opacity-5 cursor-not-allowed'
+                  }
+                  ${isToday && !isDone && isScheduled ? 'ring-1 ring-indigo-500 ring-inset' : ''}
+                `}
+              >
+                {isDone && <Check size={12} strokeWidth={3} />}
+              </button>
+            </div>
           );
         })}
       </div>
 
-      {/* 3. Growth Percentage */}
-      <div className="w-24 text-right">
-        <span className="text-3xl font-black text-slate-700 group-hover:text-indigo-400 transition-colors tabular-nums">
-          {Math.round((currentLog.stats.timesCompleted / (habit.goalCount || 1)) * 100)}%
-        </span>
+      {/* 3. Progress & Actions */}
+      <div className="w-32 flex items-center justify-between px-4 border-l border-slate-800/50">
+        <div className="flex flex-col items-end">
+          <span className="text-[11px] font-mono text-slate-400">
+            {currentLog.stats.timesCompleted}/{habit.goalCount}
+          </span>
+          <div className="w-12 h-1 bg-slate-800 rounded-full mt-1 overflow-hidden">
+            <div 
+              className="h-full bg-indigo-500" 
+              style={{ width: `${Math.min((currentLog.stats.timesCompleted / (habit.goalCount || 1)) * 100, 100)}%` }}
+            />
+          </div>
+        </div>
+        <button 
+          onClick={() => onEdit(habit)}
+          className="p-1 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-white transition-all"
+        >
+          <MoreHorizontal size={14} />
+        </button>
       </div>
     </div>
   );
 };
 
-export const WeeklyHabitTracker: React.FC<Props> = ({ items, onToggle }) => {
+export const WeeklyHabitTracker: React.FC<Props & { onEdit: (h: any) => void }> = ({ items, onToggle, onEdit }) => {
   const todayIdx = getTodayIndex();
-  const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const labels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
   return (
-    <div className="max-w-6xl mx-auto py-16">
-      {/* Clean Headers */}
-      <div className="flex items-center px-10 mb-6 opacity-40">
-        <div className="w-[400px] text-xs font-black uppercase tracking-[0.3em] text-slate-400">Activity</div>
-        <div className="flex-1 flex justify-center gap-3">
+    <div className="w-full border border-slate-800 rounded-sm overflow-hidden bg-[#0b0f1a]/40">
+      
+      {/* Table Header Row */}
+      <div className="flex items-center border-b border-slate-800 bg-slate-900/40">
+        <div className="w-72 px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-800">
+          Habit
+        </div>
+        <div className="flex-1 grid grid-cols-7">
           {labels.map((l, i) => (
-            <div key={i} className={`w-10 text-center text-xs font-black ${i === todayIdx ? 'text-indigo-500' : ''}`}>
+            <div 
+              key={i} 
+              className={`py-2 text-center text-[10px] font-bold tracking-tighter border-r border-slate-800/50 last:border-r-0
+                ${i === todayIdx ? 'text-indigo-400 bg-indigo-500/5' : 'text-slate-600'}`}
+            >
               {l}
             </div>
           ))}
         </div>
-        <div className="w-24 text-right text-xs font-black uppercase tracking-[0.3em] text-slate-400">Power</div>
+        <div className="w-32 px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-l border-slate-800 text-right">
+          Progress
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="space-y-2">
+      {/* Table Body */}
+      <div className="flex flex-col">
         {items.map((item) => (
-          <HabitRow key={item.habit._id} item={item} todayIdx={todayIdx} onToggle={onToggle} />
+          <HabitRow 
+            key={item.habit._id} 
+            item={item} 
+            todayIdx={todayIdx} 
+            onToggle={onToggle} 
+            onEdit={onEdit} 
+          />
         ))}
       </div>
     </div>
