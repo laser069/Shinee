@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Target, TrendingUp, Award } from 'lucide-react';
+import { Flame, Target, Award, CheckCircle2 } from 'lucide-react';
 import type { DashboardItem } from '../types';
 
 interface HabitsDashboardProps {
@@ -23,70 +23,61 @@ export const HabitsDashboard: React.FC<HabitsDashboardProps> = ({ items }) => {
   }).length;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
-      {/* Total Progress Card */}
-      <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-[2rem] backdrop-blur-sm group hover:border-indigo-500/50 transition-all duration-500">
-        <div className="flex items-center justify-between mb-4">
-          <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-400 group-hover:scale-110 transition-transform duration-500">
-            <Target size={24} />
-          </div>
-          <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Weekly Goal</span>
+    <div className="grid grid-cols-2 md:grid-cols-4 border border-slate-800 rounded-sm bg-[#0b0f1a]/20 divide-x divide-slate-800">
+      
+      {/* Average Completion */}
+      <div className="px-4 py-3 flex flex-col gap-1">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <Target size={12} className="text-indigo-400" />
+          Completion
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-black text-white">{Math.round(averageProgress)}%</span>
-        </div>
-        <div className="mt-4 h-1.5 w-full bg-slate-700/50 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-indigo-500 transition-all duration-1000 ease-out" 
-            style={{ width: `${averageProgress}%` }}
-          />
+          <span className="text-lg font-semibold text-slate-200">{Math.round(averageProgress)}%</span>
+          <div className="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden max-w-[40px]">
+            <div 
+              className="h-full bg-indigo-500" 
+              style={{ width: `${averageProgress}%` }}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Streak Points Card */}
-      <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-[2rem] backdrop-blur-sm group hover:border-orange-500/50 transition-all duration-500">
-        <div className="flex items-center justify-between mb-4">
-          <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-400 group-hover:scale-110 transition-transform duration-500">
-            <Flame size={24} />
-          </div>
-          <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Total Streaks</span>
+      {/* Streak Count */}
+      <div className="px-4 py-3 flex flex-col gap-1">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <Flame size={12} className="text-orange-500" />
+          Total Streak
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-black text-white">{totalDailyStreak}</span>
-          <span className="text-sm font-bold text-slate-500">Days</span>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-lg font-semibold text-slate-200">{totalDailyStreak}</span>
+          <span className="text-[10px] text-slate-600 font-medium">days</span>
         </div>
-        <p className="mt-2 text-xs text-slate-600 font-medium">Accumulated across all habits</p>
       </div>
 
-      {/* Points Card */}
-      <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-[2rem] backdrop-blur-sm group hover:border-emerald-500/50 transition-all duration-500">
-        <div className="flex items-center justify-between mb-4">
-          <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-400 group-hover:scale-110 transition-transform duration-500">
-            <Award size={24} />
-          </div>
-          <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Streak Points</span>
+      {/* Experience Points */}
+      <div className="px-4 py-3 flex flex-col gap-1">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <Award size={12} className="text-emerald-500" />
+          Discipline
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-black text-white">{totalPoints.toLocaleString()}</span>
-          <span className="text-sm font-bold text-slate-500">XP</span>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-lg font-semibold text-slate-200">{totalPoints.toLocaleString()}</span>
+          <span className="text-[10px] text-slate-600 font-medium uppercase tracking-tighter">XP</span>
         </div>
-        <p className="mt-2 text-xs text-slate-600 font-medium">Global discipline score</p>
       </div>
 
-      {/* Daily Momentum Card */}
-      <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-[2rem] backdrop-blur-sm group hover:border-pink-500/50 transition-all duration-500">
-        <div className="flex items-center justify-between mb-4">
-          <div className="p-3 bg-pink-500/10 rounded-2xl text-pink-400 group-hover:scale-110 transition-transform duration-500">
-            <TrendingUp size={24} />
-          </div>
-          <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Today</span>
+      {/* Daily Status */}
+      <div className="px-4 py-3 flex flex-col gap-1">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <CheckCircle2 size={12} className="text-pink-500" />
+          Today
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-black text-white">{completedToday}</span>
-          <span className="text-sm font-bold text-slate-500">/ {items.length} Done</span>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-lg font-semibold text-slate-200">{completedToday}</span>
+          <span className="text-[10px] text-slate-600 font-medium">/ {items.length} habits</span>
         </div>
-        <p className="mt-2 text-xs text-slate-600 font-medium">Daily momentum status</p>
       </div>
+
     </div>
   );
 };
