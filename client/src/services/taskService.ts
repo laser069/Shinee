@@ -1,83 +1,56 @@
-import apiClient, { type Task, type TaskStatus } from '../lib/apiClient';
-
-// Types for request payloads
-export interface CreateTaskPayload {
-  title: string;
-  description: string;
-  status?: TaskStatus;
-  boardId: string;
-}
-
-export interface UpdateTaskPayload {
-  title?: string;
-  description?: string;
-  status?: TaskStatus;
-}
-
-// API endpoints
-const TASK_ENDPOINTS = {
-  TASKS: '/tasks',
-  TASK_DETAILS: (id: string) => `/tasks/${id}`,
-} as const;
+import apiClient from '../lib/apiClient';
+import type { 
+  Task, 
+  CreateTaskPayload, 
+  UpdateTaskPayload, 
+  ApiResponse 
+} from '../types';
 
 /**
- * Get all tasks for the authenticated user, optionally filtered by board
- * GET /api/tasks?boardId=...
- * Requires JWT token
+ * Service for Task-related API operations
  */
-export const getTasks = async (boardId?: string): Promise<Task[]> => {
-  const params = boardId ? { boardId } : {};
-  const response = await apiClient.get<Task[]>(TASK_ENDPOINTS.TASKS, { params });
-  return response.data;
-};
-
-/**
- * Get a specific task by ID
- * GET /api/tasks/:id
- * Requires JWT token
- */
-export const getTaskById = async (id: string): Promise<Task> => {
-  const response = await apiClient.get<Task>(TASK_ENDPOINTS.TASK_DETAILS(id));
-  return response.data;
-};
-
-/**
- * Create a new task
- * POST /api/tasks
- * Requires JWT token
- */
-export const createTask = async (payload: CreateTaskPayload): Promise<Task> => {
-  const response = await apiClient.post<Task>(TASK_ENDPOINTS.TASKS, payload);
-  return response.data;
-};
-
-/**
- * Update a task
- * PATCH /api/tasks/:id
- * Requires JWT token
- */
-export const updateTask = async (id: string, payload: UpdateTaskPayload): Promise<Task> => {
-  const response = await apiClient.patch<Task>(TASK_ENDPOINTS.TASK_DETAILS(id), payload);
-  return response.data;
-};
-
-/**
- * Delete a task
- * DELETE /api/tasks/:id
- * Requires JWT token
- */
-export const deleteTask = async (id: string): Promise<{ message: string }> => {
-  const response = await apiClient.delete<{ message: string }>(TASK_ENDPOINTS.TASK_DETAILS(id));
-  return response.data;
-};
-
-// Default export
 const taskService = {
-  getTasks,
-  getTaskById,
-  createTask,
-  updateTask,
-  deleteTask,
+  /**
+   * Get all tasks, optionally filtered by boardId
+   * GET /api/tasks?boardId=...
+   */
+  getTasks: async (boardId?: string): Promise<Task[]> => {
+    const params = boardId ? { boardId } : {};
+    const { data } = await apiClient.get<ApiResponse<Task[]>>('/tasks', { params });
+    return data.data;
+  },
+
+  /**
+   * Get a specific task by ID
+   */
+  getTaskById: async (id: string): Promise<Task> => {
+    const { data } = await apiClient.get<ApiResponse<Task>>(`/tasks/${id}`);
+    return data.data;
+  },
+
+  /**
+   * Create a new task
+   */
+  createTask: async (payload: CreateTaskPayload): Promise<Task> => {
+    const { data } = await apiClient.post<ApiResponse<Task>>('/tasks', payload);
+    return data.data;
+  },
+
+  /**
+   * Update task details or status (e.g., Drag & Drop move)
+   */
+  updateTask: async (id: string, payload: UpdateTaskPayload): Promise<Task> => {
+    const { data } = await apiClient.patch<ApiResponse<Task>>(`/tasks/${id}`, payload);
+    return data.data;
+  },
+
+  /**
+   * Delete a task
+   */
+  deleteTask: async (id: string): Promise<{ message: string }> => {
+    const { data } = await apiClient.delete<ApiResponse<{ message: string }>>(`/tasks/${id}`);
+    return { message: data.message || 'Task deleted successfully' };
+  },
 };
 
 export default taskService;

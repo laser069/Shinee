@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import userService from '../services/userService';
-import type { User } from '../lib/apiClient';
+import type { User } from '../types';
+import { Shield, Mail, User as UserIcon, Calendar, ArrowRight } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
   const { user: authUser, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -18,7 +18,7 @@ export const ProfilePage: React.FC = () => {
         const data = await userService.getProfile();
         if (isMounted) setProfile(data);
       } catch (err) {
-        if (isMounted) setError('Failed to synchronize profile data');
+        console.error('Failed to synchronize profile data', err);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -27,19 +27,10 @@ export const ProfilePage: React.FC = () => {
     return () => { isMounted = false; };
   }, []);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center">
-        <div className="relative w-16 h-16">
-          <div className="absolute inset-0 rounded-full border-4 border-slate-800"></div>
-          <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
-        </div>
-        <p className="mt-4 text-slate-400 font-medium animate-pulse">Loading your workspace...</p>
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="w-12 h-12 rounded-full border-4 border-slate-800 border-t-indigo-500 animate-spin" />
       </div>
     );
   }
@@ -47,80 +38,107 @@ export const ProfilePage: React.FC = () => {
   const displayUser = profile || authUser;
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 selection:bg-blue-500/30">
-      {/* Top Navigation */}
-      <nav className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">G</div>
-            <span className="font-bold tracking-tight text-white">GeminiApp</span>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="text-sm font-semibold text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-red-500/10 hover:text-red-400 px-4 py-2 rounded-lg border border-slate-700 hover:border-red-500/20"
-          >
-            Sign Out
-          </button>
-        </div>
-      </nav>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <header className="mb-10">
+        <h1 className="text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
+          <UserIcon className="w-8 h-8 text-indigo-500" />
+          Settings
+        </h1>
+        <p className="text-slate-400 mt-2 font-medium">Personalize your Nexus experience and account details.</p>
+      </header>
 
-      <main className="max-w-4xl mx-auto py-12 px-6">
-        {/* Profile Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div>
-            <h1 className="text-4xl font-extrabold text-white tracking-tight">Account Settings</h1>
-            <p className="text-slate-400 mt-2">Manage your public profile and account preferences.</p>
-          </div>
-          {isAdmin && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-widest">
-              Admin Access
-            </span>
-          )}
-        </div>
-
-        {/* Content Card */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-sm shadow-2xl">
-          <div className="p-8 border-b border-slate-800 flex items-center gap-6">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-blue-500/20">
-              {displayUser?.name?.charAt(0) || 'U'}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Profile Info Card */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-8 backdrop-blur-sm">
+            <div className="flex items-center gap-6 mb-8 border-b border-slate-700/50 pb-8">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-4xl font-black text-white shadow-2xl shadow-indigo-500/20">
+                {displayUser?.name?.charAt(0) || 'U'}
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-white">{displayUser?.name}</h2>
+                <div className="flex items-center gap-2 text-slate-400 mt-1">
+                  <Mail className="w-4 h-4" />
+                  <span>{displayUser?.email}</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white">{displayUser?.name}</h2>
-              <p className="text-slate-400">{displayUser?.email}</p>
-            </div>
-          </div>
 
-          <div className="p-8">
-            <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
-              <ProfileItem label="Full Legal Name" value={displayUser?.name} />
-              <ProfileItem label="Contact Email" value={displayUser?.email} />
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-8">
               <ProfileItem 
-                label="Account Status" 
-                value={isAdmin ? 'Active (Administrative)' : 'Active (Standard)'} 
+                icon={<UserIcon className="w-4 h-4 text-indigo-400" />}
+                label="Display Name" 
+                value={displayUser?.name} 
               />
               <ProfileItem 
-                label="Joined Date" 
-                value={displayUser?.createdAt ? new Date(displayUser.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'} 
+                icon={<Mail className="w-4 h-4 text-indigo-400" />}
+                label="Email Address" 
+                value={displayUser?.email} 
+              />
+              <ProfileItem 
+                icon={<Shield className="w-4 h-4 text-indigo-400" />}
+                label="Access Level" 
+                value={isAdmin ? 'Administrator' : 'Standard User'} 
+              />
+              <ProfileItem 
+                icon={<Calendar className="w-4 h-4 text-indigo-400" />}
+                label="Member Since" 
+                value={displayUser?.createdAt ? new Date(displayUser.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'N/A'} 
               />
             </dl>
           </div>
 
-          <div className="bg-slate-800/30 p-6 border-t border-slate-800 flex justify-end">
-            <button className="text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors">
-              Request Data Export
+          <div className="bg-rose-500/5 border border-rose-500/20 rounded-3xl p-8 backdrop-blur-sm">
+            <h3 className="text-rose-400 font-bold mb-2 uppercase text-xs tracking-widest">Danger Zone</h3>
+            <p className="text-slate-500 text-sm mb-6">Once you sign out, you will need to re-authenticate to access your boards and habits.</p>
+            <button
+              onClick={logout}
+              className="bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-rose-500/20 active:scale-95"
+            >
+              Sign Out Account
             </button>
           </div>
         </div>
-      </main>
+
+        {/* Quick Links / Stats */}
+        <div className="space-y-6">
+          <div className="bg-slate-800/40 border border-slate-700/50 rounded-3xl p-6 backdrop-blur-sm">
+            <h3 className="text-white font-bold mb-4">Quick Stats</h3>
+            <div className="space-y-4">
+               <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-2xl">
+                  <span className="text-slate-400 text-sm">Status</span>
+                  <span className="text-emerald-400 text-sm font-bold flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Online
+                  </span>
+               </div>
+               <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-2xl">
+                  <span className="text-slate-400 text-sm">Account Type</span>
+                  <span className="text-indigo-400 text-sm font-bold">{isAdmin ? 'Pro' : 'Free'}</span>
+               </div>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="w-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 p-4 rounded-3xl font-bold flex items-center justify-between group hover:bg-indigo-500/20 transition-all"
+          >
+            Go to Boards
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
 
-// Sub-component for clean mapping
-const ProfileItem = ({ label, value }: { label: string; value?: string }) => (
-  <div className="sm:col-span-1">
-    <dt className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{label}</dt>
-    <dd className="text-base font-medium text-slate-200">{value || 'Not provided'}</dd>
+const ProfileItem = ({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string }) => (
+  <div>
+    <dt className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+      {icon}
+      {label}
+    </dt>
+    <dd className="text-xl font-bold text-white">{value || 'Not provided'}</dd>
   </div>
 );
 

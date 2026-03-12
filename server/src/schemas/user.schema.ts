@@ -33,9 +33,9 @@ export const UserRegistrationSchema = z.object({
  * This is what you import in your Service/Controller
  * export type UserRegistration = { name: string; email: string; ... }
  */
-export const UserLoginSchema = UserRegistrationSchema.pick({
-  email: true,
-  password: true,
+export const UserLoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1, "Password is required"),
 });
 export type UserRegistration = z.infer<typeof UserRegistrationSchema>;
 export type UserLogin = z.infer<typeof UserLoginSchema>;

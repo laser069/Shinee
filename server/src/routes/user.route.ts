@@ -1,8 +1,8 @@
 import express from "express";
-import { register, login, getProfile } from "../controllers/user.controller.js";
-import { protect, admin } from "../middleware/auth.middleware.js";
-import { validate } from "../middleware/validate.middleware.js";
-import { UserRegistrationSchema, UserLoginSchema } from "../schemas/user.schema.js";
+import { register, login, getProfile } from "../controllers/user.controller";
+import { protect, admin } from "../middleware/auth.middleware";
+import { validate } from "../middleware/validate.middleware";
+import { UserRegistrationSchema, UserLoginSchema } from "../schemas/user.schema";
 
 const router = express.Router();
 
@@ -18,7 +18,10 @@ router.get("/profile", protect, getProfile);
 // 3. Admin Routes
 // Private: Must be logged in AND be an admin
 router.get("/admin-panel", protect, admin, (req, res) => {
-  res.json({ message: "Welcome to the Secret Admin Dashboard" });
+  res.json({ 
+    success: true, 
+    data: { message: "Welcome to the Secret Admin Dashboard" }
+  });
 });
 
 export default router;

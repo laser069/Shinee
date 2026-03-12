@@ -17,20 +17,19 @@ export const BoardSchema = z.object({
 // For creating a new board
 export const CreateBoardSchema = BoardSchema.omit({ 
   _id: true, 
+  user: true, 
   tasks: true, // Usually starts empty
   createdAt: true, 
   updatedAt: true 
 });
 
 export const UpdateBoardSchema = z.object({
-  body: z.object({
-    title: z
-      .string()
-      .min(1, "Title is required") // Acts as the 'required' check
-      .min(3, "Title must be at least 3 characters")
-      .max(50, "Title cannot exceed 50 characters")
-      .trim(),
-  }),
+  title: z
+    .string()
+    .min(1, "Title is required") // Acts as the 'required' check
+    .min(3, "Title must be at least 3 characters")
+    .max(50, "Title cannot exceed 50 characters")
+    .trim(),
 });
 
 // Types for your services

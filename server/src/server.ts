@@ -7,6 +7,7 @@ import cors from 'cors';
 import userRoutes from './routes/user.route';
 import boardRoutes from './routes/board.route';
 import taskRoutes from './routes/task.route';
+import habitRoutes from './routes/habit.routes';
 
 const app = express();
 // const PORT =process.env.PORT
@@ -26,7 +27,7 @@ app.get("/ping",(req,res)=>{
 app.use("/api/users",userRoutes);
 app.use("/api/boards",boardRoutes);
 app.use("/api/tasks",taskRoutes);
-
+app.use("/api/habits",habitRoutes)
 app.listen(env.PORT,()=>{
     console.log(`Server running at http://localhost:${env.PORT}`);
 })

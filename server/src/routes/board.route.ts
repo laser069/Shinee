@@ -5,10 +5,10 @@ import {
   getBoardDetails, 
   deleteBoard, 
   updateBoard // Import the new controller
-} from "../controllers/board.controller.js";
-import { protect } from "../middleware/auth.middleware.js";
-import {validate} from "../middleware/validate.middleware.js";
-import {UpdateBoardSchema} from "../schemas/board.schema.js";
+} from "../controllers/board.controller";
+import { protect } from "../middleware/auth.middleware";
+import {validate} from "../middleware/validate.middleware";
+import {UpdateBoardSchema} from "../schemas/board.schema";
 
 const router = Router();
 

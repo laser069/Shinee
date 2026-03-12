@@ -8,9 +8,9 @@ export const createBoard = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     const board = await boardService.createBoard(req.user.id, req.body);
-    res.status(201).json(board);
+    res.status(201).json({ success: true, data: board });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -20,9 +20,9 @@ export const getBoards = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     const boards = await boardService.getAllBoards(req.user.id);
-    res.json(boards);
+    res.json({ success: true, data: boards });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -33,10 +33,10 @@ export const getBoardDetails = async (req: AuthRequest, res: Response) => {
     }
     const boardId = req.params.id as string;
     const board = await boardService.getBoardById(boardId, req.user.id);
-    if (!board) return res.status(404).json({ message: "Board not found" });
-    res.json(board);
+    if (!board) return res.status(404).json({ success: false, message: "Board not found" });
+    res.json({ success: true, data: board });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -47,10 +47,10 @@ export const deleteBoard = async (req: AuthRequest, res: Response) => {
     }
     const boardId = req.params.id as string;
     const board = await boardService.deleteBoard(boardId, req.user.id);
-    if (!board) return res.status(404).json({ message: "Board not found" });
-    res.json({ message: "Board deleted successfully" });
+    if (!board) return res.status(404).json({ success: false, message: "Board not found" });
+    res.json({ success: true, message: "Board deleted successfully" });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -70,11 +70,11 @@ export const updateBoard = async (req: AuthRequest, res: Response) => {
     const board = await boardService.updateBoardTitle(id, req.user.id, title);
 
     if (!board) {
-      return res.status(404).json({ message: "Board not found or unauthorized" });
+      return res.status(404).json({ success: false, message: "Board not found or unauthorized" });
     }
 
-    res.json(board);
+    res.json({ success: true, data: board });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };

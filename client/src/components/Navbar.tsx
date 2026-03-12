@@ -28,6 +28,13 @@ export const Navbar: React.FC = () => {
                 Boards
               </button>
               
+              <button 
+                onClick={() => navigate('/habits')} 
+                className="text-slate-200 hover:text-indigo-400 font-medium transition-colors"
+              >
+                Habits
+              </button>
+              
               <span className="text-slate-400 font-medium italic">
                 Hi, <span className="text-indigo-400 not-italic font-bold">{user?.name}</span>
               </span>

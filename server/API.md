@@ -12,6 +12,7 @@ Complete technical documentation for the Shinee Task Management API.
 - [User Endpoints](#user-endpoints)
 - [Board Endpoints](#board-endpoints)
 - [Task Endpoints](#task-endpoints)
+- [Habit Endpoints](#habit-endpoints)
 - [Data Models](#data-models)
 - [Validation Schemas](#validation-schemas)
 - [Middleware](#middleware)
@@ -64,6 +65,18 @@ app.use("/api/users",userRoutes);
 app.listen(env.PORT,()=>{
     console.log(`Server running at http://localhost:${env.PORT}`);
 })
+```
+
+### Health Check
+Determine if the server is alive.
+
+**Endpoint:** `GET /ping`
+
+**Response (200 OK):**
+```json
+{
+  "message": "PONG!"
+}
 ```
 
 ### Environment Configuration
@@ -245,6 +258,25 @@ curl -X GET http://localhost:5000/api/users/profile \
 **Error Responses:**
 - 401: "Not authorized"
 - 404: "User not found"
+
+---
+
+### Admin Panel
+Access restricted administrative content.
+
+**Endpoint:** `GET /api/users/admin-panel`
+
+**Headers:**
+```http
+Authorization: Bearer <admin-token>
+```
+
+**Response (200 OK):**
+```json
+{
+  "message": "Welcome to the Secret Admin Dashboard"
+}
+```
 
 ---
 
@@ -496,6 +528,11 @@ Retrieves all tasks for the authenticated user.
 
 **Endpoint:** `GET /api/tasks`
 
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `boardId` | string | (Optional) Filter tasks by a specific board ID |
+
 **Headers:**
 ```http
 Authorization: Bearer <token>
@@ -591,6 +628,131 @@ curl -X DELETE http://localhost:5000/api/tasks/507f1f77bcf86cd799439013 \
 
 ---
 
+## Habit Endpoints
+
+### Get Habit Dashboard
+Retrieves all habits with current progress for the authenticated user.
+
+**Endpoint:** `GET /api/habits`
+
+**Headers:**
+```http
+Authorization: Bearer <token>
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "60d5f1f77bcf86cd799439014",
+      "name": "Drink Water",
+      "category": "Health",
+      "ui": {
+        "icon": "💧",
+        "color": "blue"
+      },
+      "goal": {
+        "weeklyTarget": 5,
+        "scheduledDays": [1, 2, 3, 4, 5]
+      },
+      "grid": [
+        {
+          "date": "2024-01-15T00:00:00Z",
+          "isCompleted": true,
+          "isScheduled": true
+        }
+      ],
+      "weeklyProgress": 80
+    }
+  ]
+}
+```
+
+---
+
+### Create Habit
+Creates a new habit definition.
+
+**Endpoint:** `POST /api/habits`
+
+**Validation Schema:** `HabitValidationSchema`
+
+**Request:**
+```json
+{
+  "name": "Read Books",
+  "category": "Growth",
+  "trackingType": "numeric",
+  "goal": {
+    "targetValue": 20,
+    "unit": "pages",
+    "frequency": "daily"
+  }
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "60d5f1f77bcf86cd799439015",
+    "name": "Read Books",
+    "category": "Growth",
+    "trackingType": "numeric",
+    "goal": {
+      "targetValue": 20,
+      "unit": "pages",
+      "frequency": "daily"
+    }
+  }
+}
+```
+
+---
+
+### Toggle Habit Day
+Logs or un-logs progress for a specific day.
+
+**Endpoint:** `POST /api/habits/toggle`
+
+**Request:**
+```json
+{
+  "habitId": "60d5f1f77bcf86cd799439015",
+  "date": "2024-01-15T10:30:00Z"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "checked"
+  }
+}
+```
+
+---
+
+### Delete Habit
+Deletes a habit and all associated logs.
+
+**Endpoint:** `DELETE /api/habits/:id`
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Habit deleted"
+}
+```
+
+---
+
 ## Data Models
 
 ### User Model
@@ -639,6 +801,46 @@ const taskSchema = new mongoose.Schema({
 })
 
 export default mongoose.model('Task',taskSchema);
+```
+
+### Habit Model
+[`src/models/Habit.ts`](src/models/Habit.ts)
+```typescript
+const HabitSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  name: { type: String, required: true },
+  category: { type: String, default: 'Growth' },
+  ui: {
+    icon: { type: String, default: '🎯' },
+    color: { type: String, default: 'indigo' }
+  },
+  goal: {
+    type: { type: String, enum: ['boolean', 'numeric'], default: 'boolean' },
+    targetValue: { type: Number, default: 1 },
+    unit: { type: String, default: 'times' },
+    frequency: { type: String, enum: ['daily', 'weekly'], default: 'daily' },
+    scheduledDays: { type: [Number], default: [] },
+    weeklyTarget: { type: Number, default: 0 },
+    difficulty: { type: String, enum: ['easy', 'medium', 'hard'], default: 'medium' }
+  },
+  stats: {
+    currentStreak: { type: Number, default: 0 },
+    bestStreak: { type: Number, default: 0 },
+    totalXP: { type: Number, default: 0 }
+  }
+}, { timestamps: true });
+```
+
+### Log Model
+```typescript
+const LogSchema = new mongoose.Schema({
+  habitId: { type: mongoose.Schema.Types.ObjectId, ref: 'Habit', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  date: { type: Date, default: () => new Date().setHours(0,0,0,0) },
+  value: { type: Number, required: true },
+  pointsEarned: { type: Number, default: 0 },
+  multiplierAtTime: { type: Number, default: 1 }
+}, { timestamps: true });
 ```
 
 ---
@@ -721,6 +923,35 @@ export const CreateTaskSchema = TaskSchema.omit({
 
 export type Task = z.infer<typeof TaskSchema>;
 export type CreateTaskPayload = z.infer<typeof CreateTaskSchema>;
+```
+
+### Habit Validation
+[`src/schemas/habit.schema.ts`](src/schemas/habit.schema.ts)
+```typescript
+export const HabitValidationSchema = z.object({
+  name: z.string().min(1),
+  category: z.enum(['Health', 'Growth', 'Quit', 'Social', 'Finance', 'Mind']),
+  ui: z.object({
+    icon: z.string().default('🎯'),
+    color: z.string().default('indigo')
+  }),
+  goal: z.object({
+    type: z.enum(['boolean', 'numeric']),
+    targetValue: z.number().min(1),
+    unit: z.string(),
+    frequency: z.enum(['daily', 'weekly']),
+    scheduledDays: z.array(z.number()),
+    weeklyTarget: z.number().optional(),
+    difficulty: z.enum(['easy', 'medium', 'hard'])
+  })
+});
+
+export const LogValidationSchema = z.object({
+  habitId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+  value: z.number().min(0),
+  date: z.string().datetime().optional(),
+  note: z.string().max(200).optional(),
+});
 ```
 
 ---
@@ -875,6 +1106,32 @@ router.route("/:id")
 export default router;
 ```
 
+### Habit Routes
+[`src/routes/habit.routes.ts`](src/routes/habit.routes.ts)
+```typescript
+import { Router } from "express";
+import * as ctrl from "../controllers/habit.controller.js";
+import { protect } from "../middleware/auth.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
+import { HabitValidationSchema } from "../schemas/habit.schema.js";
+
+const router = Router();
+router.use(protect);
+
+router.route("/")
+  .get(ctrl.getDashboard)
+  .post(validate(HabitValidationSchema), ctrl.createHabit);
+
+router.route("/toggle")
+  .post(ctrl.toggleDay);
+
+router.route("/:id")
+  .patch(ctrl.updateHabit)
+  .delete(ctrl.deleteHabit);
+
+export default router;
+```
+
 ---
 
 ## Services
@@ -989,6 +1246,28 @@ class TaskService {
 }
 
 export default new TaskService();
+```
+
+### Habit Service
+[`src/services/habit.service.ts`](src/services/habit.service.ts)
+```typescript
+class HabitService {
+  async createHabit(userId: string, data: any) {
+    return await Habit.create({ ...data, userId });
+  }
+
+  async getWeeklySheet(userId: string) {
+    // Generates the Weekly Table Data and progress
+  }
+
+  async toggleDay(userId: string, habitId: string, date: string) {
+    // Toggles a log for the specific day
+  }
+
+  async deleteHabit(userId: string, habitId: string) {
+    // Deletes habit and associated logs
+  }
+}
 ```
 
 ---
