@@ -36,60 +36,48 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
   const totalMs = (task?.totalTimeSpent || 0) + currentSession;
 
   useEffect(() => {
-    if (!isEditMode) {
-      setStatus(defaultStatus);
-      setTitle('');
-      setDescription('');
-      setDueDate('');
-      setTargetValue('');
-      setTargetUnit('h');
-    }
-  }, [defaultStatus, isEditMode]);
-
-
-useEffect(() => {
-  if (task) {
-    setTitle(task.title);
-    setDescription(task.description || '');
-    setStatus(task.status);
-    
-    // Choose the best unit for existing duration
-    const ms = task.targetDuration;
-    if (ms) {
-      if (ms >= 86400000 && ms % 86400000 === 0) {
-        setTargetValue((ms / 86400000).toString());
-        setTargetUnit('d');
-      } else if (ms >= 3600000) {
-        setTargetValue((ms / 3600000).toString());
-        setTargetUnit('h');
+    if (task) {
+      setTitle(task.title);
+      setDescription(task.description || '');
+      setStatus(task.status);
+      
+      const ms = task.targetDuration;
+      if (ms) {
+        if (ms >= 86400000 && ms % 86400000 === 0) {
+          setTargetValue((ms / 86400000).toString());
+          setTargetUnit('d');
+        } else if (ms >= 3600000) {
+          setTargetValue((ms / 3600000).toString());
+          setTargetUnit('h');
+        } else {
+          setTargetValue((ms / 60000).toString());
+          setTargetUnit('m');
+        }
       } else {
-        setTargetValue((ms / 60000).toString());
-        setTargetUnit('m');
+        setTargetValue('');
+        setTargetUnit('h');
+      }
+      
+      if (task.dueDate) {
+        const date = new Date(task.dueDate);
+        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+        setDueDate(localDate.toISOString().slice(0, 16));
       }
     } else {
+      setTitle('');
+      setDescription('');
+      setStatus(defaultStatus);
       setTargetValue('');
       setTargetUnit('h');
+      setDueDate('');
     }
-    
-    if (task.dueDate) {
-      const date = new Date(task.dueDate);
-      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-      setDueDate(localDate.toISOString().slice(0, 16));
-    }
-  } else {
-    setTargetValue('');
-    setTargetUnit('h');
-  }
-}, [task]);
+  }, [task, defaultStatus]);
 
   const handleQuickDate = (hours = 0, days = 0) => {
-    const now = new Date();
-    now.setHours(now.getHours() + hours);
-    now.setDate(now.getDate() + days);
-    const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16);
-    setDueDate(localISO);
+    const d = new Date();
+    d.setHours(d.getHours() + hours);
+    d.setDate(d.getDate() + days);
+    setDueDate(new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
   };
 
   const formatBankedTime = (ms: number) => {
@@ -97,60 +85,41 @@ useEffect(() => {
     const m = Math.floor((ms / (1000 * 60)) % 60);
     const h = Math.floor((ms / (1000 * 60 * 60)) % 24);
     const d = Math.floor(ms / (1000 * 60 * 60 * 24));
-
-    const parts: string[] = [];
+    const parts = [];
     if (d > 0) parts.push(`${d}d`);
     if (h > 0 || d > 0) parts.push(`${h}h`);
     parts.push(`${m}m`);
     parts.push(`${s}s`);
-
     return parts.join(' ');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || !title.trim()) return;
-    
     setIsSubmitting(true);
     try {
-      const isoDueDate = dueDate ? new Date(dueDate).toISOString() : null;
-      
-      let multiplier = 3600000;
-      if (targetUnit === 'm') multiplier = 60000;
-      if (targetUnit === 'd') multiplier = 86400000;
-      
-      const targetDurationMs = targetValue ? parseFloat(targetValue) * multiplier : undefined;
+      let mult = 3600000;
+      if (targetUnit === 'm') mult = 60000;
+      if (targetUnit === 'd') mult = 86400000;
+      const targetDurationMs = targetValue ? parseFloat(targetValue) * mult : 0;
 
       const payload = { 
         title: title.trim(), 
         description: description.trim(), 
         status, 
-        dueDate: isoDueDate,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
         targetDuration: targetDurationMs 
       };
 
-      if (isEditMode && task) {
-        await taskService.updateTask(task._id, payload);
-      } else {
-        await taskService.createTask({ ...payload, boardId });
-      }
+      if (isEditMode && task) await taskService.updateTask(task._id, payload);
+      else await taskService.createTask({ ...payload, boardId });
+      
       onSuccess();
       onClose();
     } catch (err) {
-      alert("Failed to save task.");
+      alert("Save failed.");
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!task || !window.confirm("Delete this task?")) return;
-    try {
-      await taskService.deleteTask(task._id);
-      onSuccess();
-      onClose();
-    } catch (err) {
-      alert("Delete failed.");
     }
   };
 
@@ -168,8 +137,7 @@ useEffect(() => {
               {isEditMode && totalMs > 0 && (
                 <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
                   <Timer className={`w-3 h-3 ${task?.status === 'inprogress' ? 'text-indigo-400 animate-pulse' : ''}`} />
-                  {task?.status === 'inprogress' ? 'Clocking: ' : 'Banked: '}
-                  {formatBankedTime(totalMs)}
+                  {task?.status === 'inprogress' ? 'Clocking: ' : 'Banked: '} {formatBankedTime(totalMs)}
                 </p>
               )}
             </div>
@@ -178,73 +146,46 @@ useEffect(() => {
         </header>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-5 overflow-y-auto max-h-[80vh]">
-          {/* Title & Description */}
           <div className="space-y-4">
             <input required autoFocus placeholder="Task Title" className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none transition-all" value={title} onChange={(e) => setTitle(e.target.value)} />
             <textarea placeholder="Description" rows={2} className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none resize-none text-sm" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
-            {/* Target Goal (Timer) */}
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                <Hourglass className="w-3.5 h-3.5 text-indigo-400" /> Goal
-              </label>
+              <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"><Hourglass className="w-3.5 h-3.5 text-indigo-400" /> Goal</label>
               <div className="flex gap-2">
-                <input 
-                  type="number" 
-                  step="0.5"
-                  placeholder="Stopwatch"
-                  className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none placeholder:text-slate-600" 
-                  value={targetValue}  
-                  onChange={(e) => setTargetValue(e.target.value)} 
-                />
-                <select 
-                  value={targetUnit}
-                  onChange={(e) => setTargetUnit(e.target.value as any)}
-                  className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none appearance-none cursor-pointer"
-                >
+                <input type="number" step="any" placeholder="0" className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none" value={targetValue} onChange={(e) => setTargetValue(e.target.value)} />
+                <select value={targetUnit} onChange={(e) => setTargetUnit(e.target.value as any)} className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none cursor-pointer">
                   <option value="m">Min</option>
-                  <option value="h">Hours</option>
+                  <option value="h">Hrs</option>
                   <option value="d">Days</option>
                 </select>
               </div>
             </div>
-
-            {/* Status Selector */}
             <div className="space-y-3">
-               <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Current State</label>
-               <select 
-                value={status} 
-                onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none appearance-none"
-               >
+               <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">State</label>
+               <select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none">
                  <option value="todo">To Do</option>
                  <option value="inprogress">In Progress</option>
                  <option value="done">Done</option>
                </select>
             </div>
           </div>
-
-          {/* Deadline Section */}
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"><Clock className="w-3.5 h-3.5" /> Set Deadline</label>
-            <div className="flex flex-col gap-3">
-              <input type="datetime-local" className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none [color-scheme:dark]" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-              <div className="flex gap-2">
-                <button type="button" onClick={() => handleQuickDate(2, 0)} className="flex-1 py-2 rounded-xl bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-300 hover:border-indigo-500 transition-colors">+ 2 Hours</button>
-                <button type="button" onClick={() => handleQuickDate(0, 2)} className="flex-1 py-2 rounded-xl bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-300 hover:border-indigo-500 transition-colors">+ 2 Days</button>
-                <button type="button" onClick={() => setDueDate('')} className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-[10px] font-bold text-red-400">Clear</button>
-              </div>
+            <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"><Clock className="w-3.5 h-3.5" /> Deadline</label>
+            <input type="datetime-local" className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none [color-scheme:dark]" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            <div className="flex gap-2">
+              <button type="button" onClick={() => handleQuickDate(2, 0)} className="flex-1 py-2 rounded-xl bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-300 hover:border-indigo-500 transition-colors">+ 2h</button>
+              <button type="button" onClick={() => handleQuickDate(0, 2)} className="flex-1 py-2 rounded-xl bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-300 hover:border-indigo-500 transition-colors">+ 2d</button>
+              <button type="button" onClick={() => setDueDate('')} className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-[10px] font-bold text-red-400">Clear</button>
             </div>
           </div>
-
           <div className="flex gap-3 pt-4">
             {isEditMode && (
-              <button type="button" onClick={handleDelete} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-5 h-5" /></button>
+              <button type="button" onClick={async () => { if(window.confirm("Delete?")) { await taskService.deleteTask(task._id); onSuccess(); onClose(); } }} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-5 h-5" /></button>
             )}
             <button type="submit" disabled={isSubmitting} className="flex-1 p-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20">
-              {isSubmitting ? 'Saving...' : isEditMode ? 'Update Task' : 'Create Task'}
+              {isSubmitting ? 'Saving...' : 'Save Task'}
             </button>
           </div>
         </form>

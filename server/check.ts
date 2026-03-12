@@ -1,0 +1,1 @@
+import mongoose from 'mongoose'; import Task from './src/models/Task'; mongoose.connect('mongodb://127.0.0.1:27017/taskapp').then(() => Task.find().limit(2).then(t => { console.log(t.map(x => x.targetDuration)); mongoose.disconnect(); }));
