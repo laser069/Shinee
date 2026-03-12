@@ -32,9 +32,12 @@ export const TaskSchema = z.object({
   updatedAt: z.date().optional(),
 });
 
-// For creating a new task
+// For creating a new task - exclude sensitive time fields that server manages
 export const CreateTaskSchema = TaskSchema.omit({ 
   _id: true, 
+  user: true, // Server sets this from req.user
+  totalTimeSpent: true, 
+  activeStartTime: true,
   createdAt: true, 
   updatedAt: true 
 });

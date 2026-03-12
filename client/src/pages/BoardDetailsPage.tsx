@@ -4,8 +4,68 @@ import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-p
 import boardService from '../services/boardService';
 import taskService from '../services/taskService';
 import { TaskModal } from '../components/TaskModal';
-import { Plus, Loader2, ChevronLeft, Clock } from 'lucide-react';
+import { Plus, Loader2, ChevronLeft, Clock, Timer, AlertCircle } from 'lucide-react';
 import type { Board, Task, TaskStatus } from '../types';
+
+// --- SUB-COMPONENT: REAL-TIME ANALYTICS ---
+// This handles the "ticking" so the whole board doesn't re-render every second.
+const TaskAnalytics: React.FC<{ task: Task }> = ({ task }) => {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    let interval: any;
+    if (task.status === 'inprogress' && task.activeStartTime) {
+      // Refresh 'now' immediately so we don't start with a stale mount-time timestamp
+      setNow(Date.now());
+      interval = setInterval(() => setNow(Date.now()), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [task.status, task.activeStartTime]);
+
+  // Calculations
+  const currentSession = task.activeStartTime ? Math.max(0, now - new Date(task.activeStartTime).getTime()) : 0;
+  const totalMs = (task.totalTimeSpent || 0) + currentSession;
+  const target = task.targetDuration || 7200000; // Default 2h
+  const progress = Math.min(100, (totalMs / target) * 100);
+  
+  // Time Debt Logic: Predictive warning if current pace makes deadline impossible
+  const timeRemainingInGoal = Math.max(0, target - totalMs);
+  const projectedFinish = now + timeRemainingInGoal;
+  const isInDebt = task.dueDate ? projectedFinish > new Date(task.dueDate).getTime() : false;
+
+  const format = (ms: number) => {
+    const h = Math.floor(ms / 3600000).toString().padStart(2, '0');
+    const m = Math.floor((ms % 3600000) / 60000).toString().padStart(2, '0');
+    const s = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  };
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter">
+        <div className="flex items-center gap-1">
+          <Timer className={`w-3 h-3 ${task.status === 'inprogress' ? 'text-indigo-400 animate-pulse' : 'text-slate-600'}`} />
+          <span className={task.status === 'inprogress' ? "text-indigo-400" : "text-slate-600"}>
+            {format(totalMs)}
+          </span>
+        </div>
+        {isInDebt && task.status !== 'done' && (
+          <span className="text-orange-500 flex items-center gap-1 animate-pulse">
+            <AlertCircle className="w-3 h-3" /> Time Debt
+          </span>
+        )}
+      </div>
+      <div className="h-1 w-full bg-slate-800/50 rounded-full overflow-hidden border border-slate-700/30">
+        <div 
+          className={`h-full transition-all duration-1000 shadow-[0_0_10px_rgba(0,0,0,0.5)] ${
+            totalMs > target ? 'bg-red-500 shadow-red-500/20' : isInDebt ? 'bg-orange-500 shadow-orange-500/20 animate-pulse' : 'bg-indigo-500 shadow-indigo-500/20'
+          }`}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+};
 
 const BoardPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,7 +73,6 @@ const BoardPage: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeStatus, setActiveStatus] = useState<TaskStatus>('todo');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -41,24 +100,39 @@ const BoardPage: React.FC = () => {
     const newStatus = destination.droppableId as TaskStatus;
     const oldTasks = [...tasks];
 
-    setTasks(prev => prev.map(t => t._id === draggableId ? { ...t, status: newStatus } : t));
+    // 1. Optimistic UI update (including timer kickstart)
+    setTasks(prev => prev.map(t => {
+      if (t._id === draggableId) {
+        const updated = { ...t, status: newStatus };
+        if (newStatus === 'inprogress' && t.status !== 'inprogress') {
+          updated.activeStartTime = new Date().toISOString();
+        } else if (t.status === 'inprogress' && newStatus !== 'inprogress') {
+          updated.activeStartTime = null; // Backend will fix totalTimeSpent
+        }
+        return updated;
+      }
+      return t;
+    }));
 
     try {
-      await taskService.updateTask(draggableId, { status: newStatus });
+      // 2. Sync with Backend (returns recalculated time fields)
+      const response = await taskService.updateTask(draggableId, { status: newStatus });
+      
+      // 3. Update the task with the real server-side timestamps
+      setTasks(prev => prev.map(t => t._id === draggableId ? response : t));
     } catch (err) {
-      setTasks(oldTasks); // Rollback
+      setTasks(oldTasks); // Rollback on error
     }
   };
 
-  // --- LOGIC FOR TARGETED CREATION ---
   const handleOpenCreate = (status: TaskStatus) => {
-    setSelectedTask(null);      // New task mode
-    setActiveStatus(status);    // Set the default status (todo/inprogress/done)
+    setSelectedTask(null);
+    setActiveStatus(status);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (e: React.MouseEvent, task: Task) => {
-    e.stopPropagation();        // Prevents triggering the column's double-click
+    e.stopPropagation();
     setSelectedTask(task);
     setIsModalOpen(true);
   };
@@ -82,22 +156,23 @@ const BoardPage: React.FC = () => {
           <Link to="/dashboard" className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-white transition-colors">
             <ChevronLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-xl font-semibold text-white">{board?.title}</h1>
+          <h1 className="text-xl font-semibold text-white tracking-tight">{board?.title}</h1>
         </div>
       </header>
+
+      
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-6 px-8 pb-8 flex-1 overflow-x-auto">
           {columns.map(column => (
             <div key={column.id} className="w-80 flex flex-col shrink-0">
-              {/* Column Header */}
               <div className="flex items-center justify-between mb-4 px-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
                   {column.label}
                 </span>
                 <button 
                   onClick={() => handleOpenCreate(column.id)} 
-                  className="p-1.5 hover:bg-slate-800 rounded-md text-slate-500 hover:text-indigo-400"
+                  className="p-1.5 hover:bg-slate-800 rounded-md text-slate-500 hover:text-indigo-400 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -108,7 +183,6 @@ const BoardPage: React.FC = () => {
                   <div
                     {...provided.droppableProps}
                     ref={provided.innerRef}
-                    // DOUBLE CLICK ON EMPTY SPACE TO CREATE IN THIS COLUMN
                     onDoubleClick={() => handleOpenCreate(column.id)}
                     className={`flex-1 rounded-2xl p-2 transition-colors min-h-[200px] cursor-cell ${
                       snapshot.isDraggingOver ? 'bg-slate-900/40' : 'bg-transparent'
@@ -121,16 +195,18 @@ const BoardPage: React.FC = () => {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            // DOUBLE CLICK ON CARD TO EDIT
                             onDoubleClick={(e) => handleOpenEdit(e, task)}
                             className={`bg-[#161b26] border border-slate-800/40 p-4 rounded-xl mb-3 cursor-pointer hover:border-indigo-500/50 transition-all ${
-                              snapshot.isDragging ? 'shadow-2xl ring-1 ring-indigo-500' : ''
+                              snapshot.isDragging ? 'shadow-2xl ring-1 ring-indigo-500 bg-[#1c2331]' : ''
                             }`}
                           >
                             <h4 className="text-[13px] font-semibold text-slate-200">{task.title}</h4>
                             <p className="text-[11px] text-slate-500 line-clamp-2 mt-1">{task.description}</p>
                             
-                            {/* Due Date Indicator */}
+                            {/* THE ANALYTICS ENGINE */}
+                            <TaskAnalytics task={task} />
+
+                            {/* Deadline Display */}
                             {task.dueDate && (
                               <div className={`mt-3 flex items-center gap-1.5 text-[10px] font-black uppercase ${
                                 task.status !== 'done' && new Date(task.dueDate) < new Date() 
@@ -159,7 +235,6 @@ const BoardPage: React.FC = () => {
         </div>
       </DragDropContext>
 
-      {/* Shared Task Modal */}
       {isModalOpen && (
         <TaskModal 
           boardId={id!} 

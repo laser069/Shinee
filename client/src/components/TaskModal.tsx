@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import taskService from '../services/taskService';
 import type { Task, TaskStatus } from '../types';
-import { Layout, X, Trash2, Clock } from 'lucide-react';
+import { Layout, X, Trash2, Clock, Timer, Hourglass } from 'lucide-react';
 
 interface TaskModalProps {
   boardId: string;
@@ -15,34 +15,56 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatus>(defaultStatus);
-  const [dueDate, setDueDate] = useState(''); 
+  const [dueDate, setDueDate] = useState('');
+  const [targetHours, setTargetHours] = useState('2'); // Custom timer goal
+  const [now, setNow] = useState(Date.now());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditMode = !!task;
 
-  // FIX: Sync status when double-clicking different columns
+  useEffect(() => {
+    let interval: any;
+    if (task?.status === 'inprogress' && task?.activeStartTime) {
+      setNow(Date.now());
+      interval = setInterval(() => setNow(Date.now()), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [task?.status, task?.activeStartTime]);
+
+  const currentSession = task?.activeStartTime ? Math.max(0, now - new Date(task.activeStartTime).getTime()) : 0;
+  const totalMs = (task?.totalTimeSpent || 0) + currentSession;
+
   useEffect(() => {
     if (!isEditMode) {
       setStatus(defaultStatus);
-      // Clear fields for a fresh "Create" experience
       setTitle('');
       setDescription('');
       setDueDate('');
+      setTargetHours('2');
     }
   }, [defaultStatus, isEditMode]);
 
-  useEffect(() => {
-    if (task) {
-      setTitle(task.title);
-      setDescription(task.description || '');
-      setStatus(task.status);
-      if (task.dueDate) {
-        const date = new Date(task.dueDate);
-        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-        setDueDate(localDate.toISOString().slice(0, 16));
-      }
+
+useEffect(() => {
+  if (task) {
+    setTitle(task.title);
+    setDescription(task.description || '');
+    setStatus(task.status);
+    
+    // Convert duration to hours for display
+    const durationMs = task.targetDuration || 7200000;
+    const hours = durationMs / 3600000;
+    setTargetHours(isNaN(hours) ? '2' : hours.toString());
+    
+    if (task.dueDate) {
+      const date = new Date(task.dueDate);
+      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      setDueDate(localDate.toISOString().slice(0, 16));
     }
-  }, [task]);
+  } else {
+    setTargetHours('2');
+  }
+}, [task]);
 
   const handleQuickDate = (hours = 0, days = 0) => {
     const now = new Date();
@@ -54,6 +76,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
     setDueDate(localISO);
   };
 
+  const formatBankedTime = (ms: number) => {
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    if (ms > 3600000) return `${h}h ${m}m ${s}s`;
+    return `${m}m ${s}s`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || !title.trim()) return;
@@ -61,7 +91,15 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
     setIsSubmitting(true);
     try {
       const isoDueDate = dueDate ? new Date(dueDate).toISOString() : null;
-      const payload = { title: title.trim(), description: description.trim(), status, dueDate: isoDueDate };
+      const targetDurationMs = parseFloat(targetHours) * 3600000;
+
+      const payload = { 
+        title: title.trim(), 
+        description: description.trim(), 
+        status, 
+        dueDate: isoDueDate,
+        targetDuration: targetDurationMs 
+      };
 
       if (isEditMode && task) {
         await taskService.updateTask(task._id, payload);
@@ -97,17 +135,58 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
             <div className={`p-2.5 rounded-2xl ${isEditMode ? 'bg-amber-500/10 text-amber-400' : 'bg-indigo-500/10 text-indigo-400'}`}>
               <Layout className="w-5 h-5" />
             </div>
-            <h2 className="text-xl font-bold text-white tracking-tight">{isEditMode ? 'Edit Task' : 'New Task'}</h2>
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">{isEditMode ? 'Edit Task' : 'New Task'}</h2>
+              {isEditMode && totalMs > 0 && (
+                <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                  <Timer className={`w-3 h-3 ${task?.status === 'inprogress' ? 'text-indigo-400 animate-pulse' : ''}`} />
+                  {task?.status === 'inprogress' ? 'Clocking: ' : 'Banked: '}
+                  {formatBankedTime(totalMs)}
+                </p>
+              )}
+            </div>
           </div>
           <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors"><X /></button>
         </header>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-5 overflow-y-auto max-h-[80vh]">
+          {/* Title & Description */}
           <div className="space-y-4">
             <input required autoFocus placeholder="Task Title" className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none transition-all" value={title} onChange={(e) => setTitle(e.target.value)} />
             <textarea placeholder="Description" rows={2} className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none resize-none text-sm" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            {/* Target Goal (Timer) */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                <Hourglass className="w-3.5 h-3.5 text-indigo-400" /> Goal (Hours)
+              </label>
+              <input 
+                type="number" 
+                step="0.5"
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none" 
+                value={targetHours} 
+                onChange={(e) => setTargetHours(e.target.value)} 
+              />
+            </div>
+
+            {/* Status Selector */}
+            <div className="space-y-3">
+               <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Current State</label>
+               <select 
+                value={status} 
+                onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none appearance-none"
+               >
+                 <option value="todo">To Do</option>
+                 <option value="inprogress">In Progress</option>
+                 <option value="done">Done</option>
+               </select>
+            </div>
+          </div>
+
+          {/* Deadline Section */}
           <div className="space-y-3">
             <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"><Clock className="w-3.5 h-3.5" /> Set Deadline</label>
             <div className="flex flex-col gap-3">
@@ -118,12 +197,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
                 <button type="button" onClick={() => setDueDate('')} className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-[10px] font-bold text-red-400">Clear</button>
               </div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {(['todo', 'inprogress', 'done'] as TaskStatus[]).map((id) => (
-              <button key={id} type="button" onClick={() => setStatus(id)} className={`py-2.5 rounded-xl border text-[10px] font-black uppercase transition-all ${status === id ? 'bg-indigo-600/10 border-indigo-500 text-indigo-400' : 'bg-slate-900/30 border-slate-800 text-slate-600'}`}>{id}</button>
-            ))}
           </div>
 
           <div className="flex gap-3 pt-4">
