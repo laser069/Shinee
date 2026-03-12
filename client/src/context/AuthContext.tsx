@@ -1,8 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { User, LoginResponse } from '../lib/apiClient';
+import type { User, LoginPayload, RegisterPayload } from '../types';
 import userService from '../services/userService';
-import type { RegisterPayload, LoginPayload } from '../services/userService';
 import { setAuthToken } from '../lib/apiClient';
 
 interface AuthContextType {
@@ -20,72 +19,52 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check for existing auth data on mount
-useEffect(() => {
-  const initializeAuth = async () => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+  // 1. Initialize Auth from LocalStorage
+  useEffect(() => {
+    const initializeAuth = () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setAuthToken(storedToken);
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        
-        // OPTIONAL: Verify the token with your backend here
-        // const freshUser = await userService.getProfile();
-        // setUser(freshUser); 
-      } catch (e) {
-        logout(); // Clean sweep if data is corrupt
+      if (storedToken && storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setToken(storedToken);
+          setUser(parsedUser);
+          setAuthToken(storedToken); // Sync the Axios instance
+        } catch (e) {
+          logout(); // Clear if data is malformed
+        }
       }
-    }
-    
-    // We only set loading to false AFTER we've checked storage
-    setIsLoading(false); 
-  };
+      setIsLoading(false);
+    };
+    initializeAuth();
+  }, []);
 
-  initializeAuth();
-}, []);
-
+  // 2. Login Logic
   const login = async (credentials: LoginPayload): Promise<void> => {
     try {
       setError(null);
       setIsLoading(true);
 
-      const response: LoginResponse = await userService.login(credentials);
+      // Destructure the clean data from our service
+      const { user: userData, token: authToken } = await userService.login(credentials);
 
-      // Store auth data
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify({
-        _id: response._id,
-        name: response.name,
-        email: response.email,
-        isAdmin: response.isAdmin,
-      }));
+      // Persist to LocalStorage
+      localStorage.setItem('token', authToken);
+      localStorage.setItem('user', JSON.stringify(userData));
 
-      // Update state
-      setToken(response.token);
-      setAuthToken(response.token);
-      setUser({
-        _id: response._id,
-        name: response.name,
-        email: response.email,
-        isAdmin: response.isAdmin,
-      });
-
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      // Update State
+      setToken(authToken);
+      setUser(userData);
+      setAuthToken(authToken);
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Login failed. Please try again.';
       setError(message);
       throw err;
     } finally {
@@ -93,24 +72,22 @@ useEffect(() => {
     }
   };
 
+  // 3. Register Logic
   const register = async (userData: RegisterPayload): Promise<void> => {
     try {
       setError(null);
       setIsLoading(true);
 
-      const response = await userService.register(userData);
+      const { user: newUser, token: authToken } = await userService.register(userData);
 
-      // Store auth data
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('token', authToken);
+      localStorage.setItem('user', JSON.stringify(newUser));
 
-      // Update state
-      setToken(response.token);
-      setAuthToken(response.token);
-      setUser(response.user);
-
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+      setToken(authToken);
+      setUser(newUser);
+      setAuthToken(authToken);
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Registration failed.';
       setError(message);
       throw err;
     } finally {
@@ -119,55 +96,40 @@ useEffect(() => {
   };
 
   const logout = (): void => {
-    // Clear all auth data
     localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    
-    // Reset state
     setToken(null);
     setUser(null);
     setAuthToken(null);
     setError(null);
   };
 
-  const clearError = (): void => {
-    setError(null);
-  };
-
-  // Computed values
+  // Computed properties
   const isAuthenticated = !!token && !!user;
-  const isAdmin = user?.isAdmin ?? false;
-
-  const value: AuthContextType = {
-    user,
-    token,
-    isAuthenticated,
-    isLoading,
-    isAdmin,
-    login,
-    register,
-    logout,
-    error,
-    clearError,
-  };
+  const isAdmin = user?.isAdmin === true;
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthenticated,
+        isLoading,
+        isAdmin,
+        login,
+        register,
+        logout,
+        error,
+        clearError: () => setError(null),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use the auth context
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
-
-export default AuthContext;

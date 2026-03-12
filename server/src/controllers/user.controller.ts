@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import userService from "../services/user.service.js"; // Import the singleton instance
-import { UserRegistrationSchema } from "../schemas/user.schema.js";
+import userService from "../services/user.service"; // Import the singleton instance
+import { UserRegistrationSchema } from "../schemas/user.schema";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { env } from "../config/env.js";
+import { env } from "../config/env";
 
 // Extend Request for protected routes
 interface AuthRequest extends Request {
@@ -24,7 +24,11 @@ export const register = async (req: Request, res: Response) => {
     );
 
     const { password, ...userWithoutPassword } = user.toObject();
-    res.status(201).json({ user: userWithoutPassword, token });
+    res.status(201).json({ 
+      success: true, 
+      message: 'User registered successfully',
+      data: { user: userWithoutPassword, token } 
+    });
     
   } catch (error: any) {
     if (error.name === "ZodError") {
@@ -44,21 +48,27 @@ export const login = async (req: Request, res: Response) => {
     // 2. Compare passwords
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        isAdmin: user.isAdmin,
-        token: jwt.sign(
-          { id: user._id, isAdmin: user.isAdmin }, 
-          env.JWT_SECRET as string, 
-          { expiresIn: "30d" }
-        ),
+        success: true,
+        message: 'Login successful',
+        data: {
+          user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin,
+          },
+          token: jwt.sign(
+            { id: user._id, isAdmin: user.isAdmin }, 
+            env.JWT_SECRET as string, 
+            { expiresIn: "30d" }
+          ),
+        }
       });
     } else {
-      res.status(401).json({ message: "Invalid email or password" });
+      res.status(401).json({ success: false, message: "Invalid email or password" });
     }
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -72,9 +82,15 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
     const user = await userService.findUserById(req.user.id);
 
     if (user) {
-      res.json(user);
+      res.json({ 
+        success: true, 
+        data: user 
+      });
     } else {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
     }
   } catch (error: any) {
     res.status(500).json({ message: error.message });

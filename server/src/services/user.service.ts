@@ -1,6 +1,6 @@
-import User from "../models/User.js";
+import User from "../models/User";
 import bcrypt from "bcrypt";
-import { UserRegistration } from "../schemas/user.schema.js";
+import { UserRegistration } from "../schemas/user.schema";
 
 class UserService {
   /**

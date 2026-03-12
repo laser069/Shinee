@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -25,9 +26,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Not authenticated - redirect to login
   if (!isAuthenticated) {
-    window.history.pushState({}, '', fallbackPath);
-    window.location.reload();
-    return null;
+    return <Navigate to={fallbackPath} replace />;
   }
 
   // Authenticated but requires admin - check admin status
