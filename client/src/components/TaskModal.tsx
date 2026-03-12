@@ -7,12 +7,10 @@ interface TaskModalProps {
   boardId: string;
   defaultStatus: TaskStatus;
   task?: Task | null; // Optional task for Edit Mode
-  task?: Task | null; // Optional task for Edit Mode
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, task, onClose, onSuccess }) => {
 export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, task, onClose, onSuccess }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -30,44 +28,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
     }
   }, [task]);
 
-  const isEditMode = !!task;
-
-  // Sync state if task changes (important for editing)
-  useEffect(() => {
-    if (task) {
-      setTitle(task.title);
-      setDescription(task.description);
-      setStatus(task.status);
-    }
-  }, [task]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || !title.trim()) return;
     
     setIsSubmitting(true);
-    try {
-      if (isEditMode && task) {
-        await taskService.updateTask(task._id, { title, description, status });
-      } else {
-        await taskService.createTask({ title, description, status, boardId });
-      }
-      onSuccess();
-      onClose();
-    } catch (err) {
-      console.error(err);
-      alert("Action failed. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!task || !window.confirm("Permanently delete this task?")) return;
-    
-    setIsSubmitting(true);
-    try {
-      await taskService.deleteTask(task._id);
     try {
       if (isEditMode && task) {
         await taskService.updateTask(task._id, { title, description, status });

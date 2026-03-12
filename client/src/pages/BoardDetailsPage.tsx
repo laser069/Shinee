@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import boardService from '../services/boardService';
 import taskService from '../services/taskService';
 import { TaskModal } from '../components/TaskModal';
 import { Plus, Loader2, AlertCircle, ChevronLeft } from 'lucide-react';
 import type { Board, Task, TaskStatus } from '../types';
-import type { DropResult } from '@hello-pangea/dnd';
+
 const BoardPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [board, setBoard] = useState<Board | null>(null);
@@ -18,14 +18,11 @@ const BoardPage: React.FC = () => {
   const [activeStatus, setActiveStatus] = useState<TaskStatus>('todo');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  useEffect(() => {
-    if (id) fetchBoardDetails();
-  }, [id]);
-
-  const fetchBoardDetails = async () => {
+  const fetchBoardDetails = useCallback(async () => {
+    if (!id) return;
     try {
       setLoading(true);
-      const boardData = await boardService.getBoardById(id!);
+      const boardData = await boardService.getBoardById(id);
       setBoard(boardData);
       const boardTasks = boardData && Array.isArray(boardData.tasks) ? boardData.tasks : [];
       setTasks([...boardTasks].sort((a, b) => 
@@ -40,7 +37,6 @@ const BoardPage: React.FC = () => {
 
   useEffect(() => { fetchBoardDetails(); }, [fetchBoardDetails]);
 
-  // --- DRAG AND DROP HANDLER ---
   const onDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
     if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) return;
@@ -50,8 +46,7 @@ const BoardPage: React.FC = () => {
 
     setTasks(prev => prev.map(task => 
       task._id === draggableId ? { ...task, status: newStatus } : task
-    );
-    setTasks(updatedTasks);
+    ));
 
     try {
       await taskService.updateTask(draggableId, { status: newStatus });
