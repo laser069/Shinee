@@ -16,7 +16,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatus>(defaultStatus);
   const [dueDate, setDueDate] = useState('');
-  const [targetValue, setTargetValue] = useState('2');
+  const [targetValue, setTargetValue] = useState('');
   const [targetUnit, setTargetUnit] = useState<'m' | 'h' | 'd'>('h');
   const [now, setNow] = useState(Date.now());
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,7 +41,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
       setTitle('');
       setDescription('');
       setDueDate('');
-      setTargetValue('2');
+      setTargetValue('');
       setTargetUnit('h');
     }
   }, [defaultStatus, isEditMode]);
@@ -54,16 +54,21 @@ useEffect(() => {
     setStatus(task.status);
     
     // Choose the best unit for existing duration
-    const ms = task.targetDuration || 7200000;
-    if (ms >= 86400000 && ms % 86400000 === 0) {
-      setTargetValue((ms / 86400000).toString());
-      setTargetUnit('d');
-    } else if (ms >= 3600000) {
-      setTargetValue((ms / 3600000).toString());
-      setTargetUnit('h');
+    const ms = task.targetDuration;
+    if (ms) {
+      if (ms >= 86400000 && ms % 86400000 === 0) {
+        setTargetValue((ms / 86400000).toString());
+        setTargetUnit('d');
+      } else if (ms >= 3600000) {
+        setTargetValue((ms / 3600000).toString());
+        setTargetUnit('h');
+      } else {
+        setTargetValue((ms / 60000).toString());
+        setTargetUnit('m');
+      }
     } else {
-      setTargetValue((ms / 60000).toString());
-      setTargetUnit('m');
+      setTargetValue('');
+      setTargetUnit('h');
     }
     
     if (task.dueDate) {
@@ -72,7 +77,7 @@ useEffect(() => {
       setDueDate(localDate.toISOString().slice(0, 16));
     }
   } else {
-    setTargetValue('2');
+    setTargetValue('');
     setTargetUnit('h');
   }
 }, [task]);
@@ -114,7 +119,7 @@ useEffect(() => {
       if (targetUnit === 'm') multiplier = 60000;
       if (targetUnit === 'd') multiplier = 86400000;
       
-      const targetDurationMs = parseFloat(targetValue) * multiplier;
+      const targetDurationMs = targetValue ? parseFloat(targetValue) * multiplier : undefined;
 
       const payload = { 
         title: title.trim(), 
@@ -189,8 +194,9 @@ useEffect(() => {
                 <input 
                   type="number" 
                   step="0.5"
-                  className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none" 
-                  value={targetValue} 
+                  placeholder="Stopwatch"
+                  className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none placeholder:text-slate-600" 
+                  value={targetValue}  
                   onChange={(e) => setTargetValue(e.target.value)} 
                 />
                 <select 

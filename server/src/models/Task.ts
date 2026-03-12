@@ -29,7 +29,7 @@ const taskSchema = new Schema<ITask>({
   dueDate: { type: Date },
   totalTimeSpent: { type: Number, default: 0 },
   activeStartTime: { type: Date, default: null },
-  targetDuration: { type: Number, default: 7200000 }, // 2 hours in ms
+  targetDuration: { type: Number }, // Optional, no hardcoded default
 }, { timestamps: true });
 
 // Exporting as "Task"

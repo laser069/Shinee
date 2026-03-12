@@ -4,16 +4,14 @@ import { CreateTaskPayload, UpdateTaskPayload } from '../schemas/task.schema';
 
 class TaskService {
   async createTask(userId: string, boardId: string, data: CreateTaskPayload) {
-    const { dueDate, activeStartTime, targetDuration, ...rest } = data;
+    const { dueDate, targetDuration, ...rest } = data;
 
     const task = await Task.create({
       ...rest,
       user: userId,
       boardId,
-      // Ensure targetDuration has a fallback to prevent NaN in frontend
-      targetDuration: targetDuration || 7200000, 
+      targetDuration: targetDuration ?? undefined, 
       dueDate: dueDate ? new Date(dueDate) : undefined,
-      activeStartTime: activeStartTime ? new Date(activeStartTime) : undefined,
     });
 
     await Board.findByIdAndUpdate(boardId, {

@@ -22,11 +22,13 @@ const TaskAnalytics: React.FC<{ task: Task }> = ({ task }) => {
 
   const currentSession = task.activeStartTime ? Math.max(0, now - new Date(task.activeStartTime).getTime()) : 0;
   const totalMs = (task.totalTimeSpent || 0) + currentSession;
-  const target = task.targetDuration || 7200000;
-  const progress = Math.min(100, (totalMs / target) * 100);
   
-  const timeRemainingInGoal = Math.max(0, target - totalMs);
-  const overGoal = totalMs > target;
+  const hasTarget = !!task.targetDuration && task.targetDuration > 0;
+  const target = task.targetDuration || 0;
+  const progress = hasTarget ? Math.min(100, (totalMs / target) * 100) : 0;
+  
+  const timeRemainingInGoal = hasTarget ? Math.max(0, target - totalMs) : 0;
+  const overGoal = hasTarget ? totalMs > target : false;
   
   const projectedFinish = now + timeRemainingInGoal;
   const isInDebt = task.dueDate ? projectedFinish > new Date(task.dueDate).getTime() : false;
@@ -51,7 +53,7 @@ const TaskAnalytics: React.FC<{ task: Task }> = ({ task }) => {
       <div className="flex justify-between items-end">
         <div className="flex flex-col gap-0.5">
           <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
-            {overGoal ? 'Over Goal' : 'Goal Countdown'}
+            {hasTarget ? (overGoal ? 'Over Goal' : 'Goal Countdown') : 'Stopwatch'}
           </span>
           <div className="flex items-center gap-1.5">
             <Timer className={`w-3.5 h-3.5 ${task.status === 'inprogress' ? 'text-indigo-400 animate-pulse' : 'text-slate-600'}`} />
@@ -60,7 +62,10 @@ const TaskAnalytics: React.FC<{ task: Task }> = ({ task }) => {
                 ? (overGoal ? 'text-red-400' : 'text-indigo-400') 
                 : 'text-slate-500'
             }`}>
-              {format(overGoal ? totalMs - target : timeRemainingInGoal)}
+              {hasTarget 
+                ? format(overGoal ? totalMs - target : timeRemainingInGoal)
+                : format(totalMs)
+              }
             </span>
           </div>
         </div>
@@ -73,18 +78,20 @@ const TaskAnalytics: React.FC<{ task: Task }> = ({ task }) => {
         )}
       </div>
 
-      <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800/50 shadow-inner">
-        <div 
-          className={`h-full transition-all duration-1000 relative ${
-            overGoal ? 'bg-red-500' : isInDebt ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.3)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.3)]'
-          }`}
-          style={{ width: `${progress}%` }}
-        >
-          {task.status === 'inprogress' && (
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-          )}
+      {hasTarget && (
+        <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800/50 shadow-inner">
+          <div 
+            className={`h-full transition-all duration-1000 relative ${
+              overGoal ? 'bg-red-500' : isInDebt ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.3)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.3)]'
+            }`}
+            style={{ width: `${progress}%` }}
+          >
+            {task.status === 'inprogress' && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

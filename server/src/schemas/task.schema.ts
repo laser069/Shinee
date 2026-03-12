@@ -26,7 +26,7 @@ export const TaskSchema = z.object({
   activeStartTime: z.string().datetime().optional().nullable(),
 
   // 4. THE GOAL / DURATION (ms)
-  targetDuration: z.number().default(7200000), // Default 2 hours
+  targetDuration: z.number().optional().nullable(), 
 
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
