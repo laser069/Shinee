@@ -21,7 +21,15 @@ body {
   min-height: 100vh;
 }
 
-/* Reset buttons to allow Tailwind to handle the heavy lifting */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
 button {
   cursor: pointer;
   transition: all 0.2s ease-in-out;
