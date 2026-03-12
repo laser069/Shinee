@@ -32,10 +32,18 @@ const TaskAnalytics: React.FC<{ task: Task }> = ({ task }) => {
   const isInDebt = task.dueDate ? projectedFinish > new Date(task.dueDate).getTime() : false;
 
   const format = (ms: number) => {
-    const h = Math.floor(ms / 3600000).toString().padStart(2, '0');
-    const m = Math.floor((ms % 3600000) / 60000).toString().padStart(2, '0');
-    const s = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
+    const s = Math.floor((ms / 1000) % 60);
+    const m = Math.floor((ms / (1000 * 60)) % 60);
+    const h = Math.floor((ms / (1000 * 60 * 60)) % 24);
+    const d = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+    const parts: string[] = [];
+    if (d > 0) parts.push(`${d}d`);
+    if (h > 0 || d > 0) parts.push(`${h}h`);
+    parts.push(`${m}m`);
+    if (d === 0) parts.push(`${s}s`); // Hide seconds if showing days
+
+    return parts.join(' ');
   };
 
   return (

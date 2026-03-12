@@ -16,7 +16,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatus>(defaultStatus);
   const [dueDate, setDueDate] = useState('');
-  const [targetHours, setTargetHours] = useState('2'); // Custom timer goal
+  const [targetValue, setTargetValue] = useState('2');
+  const [targetUnit, setTargetUnit] = useState<'m' | 'h' | 'd'>('h');
   const [now, setNow] = useState(Date.now());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,7 +41,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
       setTitle('');
       setDescription('');
       setDueDate('');
-      setTargetHours('2');
+      setTargetValue('2');
+      setTargetUnit('h');
     }
   }, [defaultStatus, isEditMode]);
 
@@ -51,10 +53,18 @@ useEffect(() => {
     setDescription(task.description || '');
     setStatus(task.status);
     
-    // Convert duration to hours for display
-    const durationMs = task.targetDuration || 7200000;
-    const hours = durationMs / 3600000;
-    setTargetHours(isNaN(hours) ? '2' : hours.toString());
+    // Choose the best unit for existing duration
+    const ms = task.targetDuration || 7200000;
+    if (ms >= 86400000 && ms % 86400000 === 0) {
+      setTargetValue((ms / 86400000).toString());
+      setTargetUnit('d');
+    } else if (ms >= 3600000) {
+      setTargetValue((ms / 3600000).toString());
+      setTargetUnit('h');
+    } else {
+      setTargetValue((ms / 60000).toString());
+      setTargetUnit('m');
+    }
     
     if (task.dueDate) {
       const date = new Date(task.dueDate);
@@ -62,7 +72,8 @@ useEffect(() => {
       setDueDate(localDate.toISOString().slice(0, 16));
     }
   } else {
-    setTargetHours('2');
+    setTargetValue('2');
+    setTargetUnit('h');
   }
 }, [task]);
 
@@ -77,11 +88,18 @@ useEffect(() => {
   };
 
   const formatBankedTime = (ms: number) => {
-    const h = Math.floor(ms / 3600000);
-    const m = Math.floor((ms % 3600000) / 60000);
-    const s = Math.floor((ms % 60000) / 1000);
-    if (ms > 3600000) return `${h}h ${m}m ${s}s`;
-    return `${m}m ${s}s`;
+    const s = Math.floor((ms / 1000) % 60);
+    const m = Math.floor((ms / (1000 * 60)) % 60);
+    const h = Math.floor((ms / (1000 * 60 * 60)) % 24);
+    const d = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+    const parts: string[] = [];
+    if (d > 0) parts.push(`${d}d`);
+    if (h > 0 || d > 0) parts.push(`${h}h`);
+    parts.push(`${m}m`);
+    parts.push(`${s}s`);
+
+    return parts.join(' ');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,7 +109,12 @@ useEffect(() => {
     setIsSubmitting(true);
     try {
       const isoDueDate = dueDate ? new Date(dueDate).toISOString() : null;
-      const targetDurationMs = parseFloat(targetHours) * 3600000;
+      
+      let multiplier = 3600000;
+      if (targetUnit === 'm') multiplier = 60000;
+      if (targetUnit === 'd') multiplier = 86400000;
+      
+      const targetDurationMs = parseFloat(targetValue) * multiplier;
 
       const payload = { 
         title: title.trim(), 
@@ -160,15 +183,26 @@ useEffect(() => {
             {/* Target Goal (Timer) */}
             <div className="space-y-3">
               <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                <Hourglass className="w-3.5 h-3.5 text-indigo-400" /> Goal (Hours)
+                <Hourglass className="w-3.5 h-3.5 text-indigo-400" /> Goal
               </label>
-              <input 
-                type="number" 
-                step="0.5"
-                className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none" 
-                value={targetHours} 
-                onChange={(e) => setTargetHours(e.target.value)} 
-              />
+              <div className="flex gap-2">
+                <input 
+                  type="number" 
+                  step="0.5"
+                  className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none" 
+                  value={targetValue} 
+                  onChange={(e) => setTargetValue(e.target.value)} 
+                />
+                <select 
+                  value={targetUnit}
+                  onChange={(e) => setTargetUnit(e.target.value as any)}
+                  className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none appearance-none cursor-pointer"
+                >
+                  <option value="m">Min</option>
+                  <option value="h">Hours</option>
+                  <option value="d">Days</option>
+                </select>
+              </div>
             </div>
 
             {/* Status Selector */}
