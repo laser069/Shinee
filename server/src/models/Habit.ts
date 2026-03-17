@@ -3,7 +3,6 @@ import { Schema, model, Document, Types } from 'mongoose';
 export interface IHabit extends Document {
   user: Types.ObjectId;
   name: string;
-  icon: string;
   color: string;
   
   // Logic Config
@@ -28,7 +27,6 @@ export interface IHabit extends Document {
 const habitSchema = new Schema<IHabit>({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true, trim: true },
-  icon: { type: String, default: '✅' },
   color: { type: String, default: '#3B82F6' }, // Tailwind blue-500
 
   frequencyType: { 

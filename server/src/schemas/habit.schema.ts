@@ -4,7 +4,6 @@ export const HabitSchema = z.object({
   _id: z.string().optional(),
   user: z.string(),
   name: z.string().min(1, "Habit name is required").max(100),
-  icon: z.string().default("✅"),
   color: z.string().default("#3B82F6"),
 
   // Frequency Logic
@@ -44,7 +43,6 @@ export const CreateHabitSchema = HabitSchema.omit({
 // For updating habit settings
 export const UpdateHabitSchema = HabitSchema.pick({
   name: true,
-  icon: true,
   color: true,
   frequencyType: true,
   fixedDays: true,

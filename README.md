@@ -1,6 +1,6 @@
-# NEXUS - Advanced Task & Habit Management
+# Shinee - Advanced Task & Habit Management
 
-NEXUS is a premium, high-performance task management and habit tracking application designed for ultimate productivity. Built with a modern tech stack (React, Express, MongoDB), it features a stunning glassmorphic UI, real-time board management, and gamified habit tracking.
+Shinee is a premium, high-performance task management and habit tracking application designed for ultimate productivity. Built with a modern tech stack (React, Express, MongoDB), it features a stunning glassmorphic UI, real-time board management, and gamified habit tracking.
 
 ## 🚀 Key Modules
 

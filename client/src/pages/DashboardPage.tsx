@@ -54,11 +54,11 @@ const Dashboard: React.FC = () => {
     <div className="max-w-7xl mx-auto py-10 px-6">
       <header className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-3">
-             <Layout className="w-8 h-8 text-indigo-500" />
+          <h1 className="text-4xl font-black text-[#0A0A0A] tracking-tight flex items-center gap-3">
+             <Layout className="w-8 h-8 text-[#F5C842]" />
              Workspaces
           </h1>
-          <p className="text-slate-400 mt-2 font-medium">Your centralized project hubs.</p>
+          <p className="text-[#0A0A0A]/60 mt-2 font-bold">Your centralized project hubs.</p>
         </div>
         
         <form onSubmit={handleCreateBoard} className="flex gap-2">
@@ -67,12 +67,12 @@ const Dashboard: React.FC = () => {
             value={newBoardTitle}
             onChange={(e) => setNewBoardTitle(e.target.value)}
             placeholder="New workspace name..."
-            className="bg-slate-800 border-2 border-slate-700 p-3 rounded-xl w-64 text-white focus:border-indigo-500 outline-none transition-all"
+            className="bg-white border-4 border-[#0A0A0A] p-3 rounded-xl w-64 text-[#0A0A0A] focus:bg-[#F5C842]/10 outline-none transition-all font-bold"
           />
           <button 
             type="submit" 
             disabled={!newBoardTitle.trim()}
-            className="bg-indigo-600 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-all flex items-center gap-2"
+            className="bg-[#0A0A0A] disabled:opacity-50 text-white px-6 py-3 rounded-xl font-black hover:bg-[#F5C842] hover:text-[#0A0A0A] transition-all flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
             Create
@@ -81,30 +81,30 @@ const Dashboard: React.FC = () => {
       </header>
       
       {safeBoards.length === 0 ? (
-        <div className="text-center py-20 bg-slate-900/40 border-2 border-dashed border-slate-800 rounded-3xl">
-           <Layout className="w-16 h-16 text-slate-700 mx-auto mb-4" />
-           <h2 className="text-xl font-bold text-slate-400">No workspaces found</h2>
-           <p className="text-slate-500">Create a board to start managing tasks.</p>
+        <div className="text-center py-20 bg-white border-4 border-[#0A0A0A] rounded-3xl shadow-[8px_8px_0px_0px_rgba(10,10,10,1)]">
+           <Layout className="w-16 h-16 text-[#0A0A0A]/20 mx-auto mb-4" />
+           <h2 className="text-xl font-black text-[#0A0A0A]">No workspaces found</h2>
+           <p className="text-[#0A0A0A]/60 font-bold">Create a board to start managing tasks.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {safeBoards.map(board => (
             <Link 
               key={board._id} 
               to={`/board/${board._id}`}
-              className="group relative bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl hover:border-indigo-500/50 transition-all hover:-translate-y-1"
+              className="group relative bg-white border-4 border-[#0A0A0A] p-6 rounded-2xl hover:bg-[#F5C842]/5 transition-all hover:-translate-y-1 shadow-[8px_8px_0px_0px_rgba(10,10,10,1)]"
             >
               <div className="flex justify-between items-start mb-6">
-                <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400">
+                <div className="p-3 bg-[#0A0A0A] rounded-xl text-[#F5C842]">
                   <Layout className="w-6 h-6" />
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-indigo-400 transition-colors" />
+                <ArrowRight className="w-5 h-5 text-[#0A0A0A] group-hover:translate-x-1 transition-transform" />
               </div>
               
-              <h2 className="text-xl font-bold text-white mb-4">{board.title}</h2>
+              <h2 className="text-xl font-black text-[#0A0A0A] mb-4 uppercase">{board.title}</h2>
               
-              <div className="flex items-center gap-2 text-slate-500 text-sm">
-                <Calendar className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-[#0A0A0A]/60 text-sm font-bold">
+                <Calendar className="w-4 h-4 text-[#F5C842]" />
                 <span>{new Date(board.createdAt).toLocaleDateString()}</span>
               </div>
             </Link>

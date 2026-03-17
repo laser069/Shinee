@@ -61,22 +61,20 @@ const TaskAnalytics: React.FC<{ task: Task }> = ({ task }) => {
   };
 
   return (
-    <div className="mt-4 space-y-2">
+    <div className="mt-4 space-y-4">
       <div className="flex justify-between items-end">
-        <div className="flex flex-col gap-0.5">
-          {/* Label changes based on whether a goal was set */}
-          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
-            {hasTarget ? (overGoal ? 'Over Goal' : 'Goal Countdown') : 'Stopwatch'}
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-black text-[#0A0A0A]/40 uppercase tracking-widest">
+            {hasTarget ? (overGoal ? 'Goal Exceeded' : 'Goal Timer') : 'Session Tracker'}
           </span>
           
-          <div className="flex items-center gap-1.5">
-            <Timer className={`w-3.5 h-3.5 ${task.status === 'inprogress' ? 'text-indigo-400 animate-pulse' : 'text-slate-600'}`} />
-            <span className={`text-xs font-mono font-bold ${
+          <div className="flex items-center gap-2">
+            <Timer className={`w-4 h-4 ${task.status === 'inprogress' ? 'text-[#0A0A0A] animate-pulse' : 'text-[#0A0A0A]/20'}`} />
+            <span className={`text-sm font-black tabular-nums ${
               task.status === 'inprogress' 
-                ? (overGoal ? 'text-red-400' : 'text-indigo-400') 
-                : 'text-slate-500'
+                ? (overGoal ? 'text-rose-500' : 'text-[#0A0A0A]') 
+                : 'text-[#0A0A0A]/40'
             }`}>
-              {/* Display: Countdown if target exists, else Stopwatch */}
               {hasTarget 
                 ? format(overGoal ? totalMs - target : timeRemainingInGoal)
                 : format(totalMs)
@@ -85,33 +83,26 @@ const TaskAnalytics: React.FC<{ task: Task }> = ({ task }) => {
           </div>
         </div>
         
-        {/* Time Debt Warning */}
         {isInDebt && task.status !== 'done' && (
-          <div className="flex flex-col items-end gap-0.5 group">
-            <span className="text-[8px] font-black text-orange-500 uppercase tracking-widest animate-pulse">Time Debt</span>
-            <AlertCircle className="w-3.5 h-3.5 text-orange-500 animate-bounce" />
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Time Over</span>
+            <AlertCircle className="w-4 h-4 text-rose-500" />
           </div>
         )}
       </div>
 
-      {/* Progress Bar: Only visible if a target goal is set */}
       {hasTarget && (
-        <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800/50 shadow-inner">
+        <div className="h-4 w-full bg-[#0A0A0A]/5 rounded-lg overflow-hidden border-2 border-[#0A0A0A]/10">
           <div 
-            className={`h-full transition-all duration-1000 relative ${
+            className={`h-full transition-all duration-1000 ${
               overGoal 
-                ? 'bg-red-500' 
+                ? 'bg-rose-500' 
                 : isInDebt 
-                  ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.3)]' 
-                  : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.3)]'
+                  ? 'bg-[#F5C842]' 
+                  : 'bg-[#0A0A0A]'
             }`}
             style={{ width: `${progress}%` }}
-          >
-            {/* Shimmer effect for active tasks */}
-            {task.status === 'inprogress' && (
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-            )}
-          </div>
+          />
         </div>
       )}
     </div>
@@ -127,16 +118,16 @@ const DeadlineCountdown: React.FC<{ dueDate: string; status: TaskStatus }> = ({ 
     const update = () => {
       const diff = new Date(dueDate).getTime() - Date.now();
       if (diff < 0) {
-        setText('Past Due');
+        setText('Expired');
         setIsUrgent(status !== 'done');
         return;
       }
       const hours = Math.floor(diff / 3600000);
       const days = Math.floor(hours / 24);
 
-      if (days > 0) setText(`${days}d left`);
-      else if (hours > 0) setText(`${hours}h left`);
-      else setText(`${Math.floor(diff / 60000)}m left`);
+      if (days > 0) setText(`${days}d`);
+      else if (hours > 0) setText(`${hours}h`);
+      else setText(`${Math.floor(diff / 60000)}m`);
       
       setIsUrgent(hours < 12 && status !== 'done');
     };
@@ -146,10 +137,10 @@ const DeadlineCountdown: React.FC<{ dueDate: string; status: TaskStatus }> = ({ 
   }, [dueDate, status]);
 
   return (
-    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[8px] font-black uppercase tracking-widest ${
-      isUrgent ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-slate-800/50 border-slate-700/50 text-slate-500'
+    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border-2 text-[10px] font-black uppercase tracking-widest ${
+      isUrgent ? 'bg-rose-500 border-[#0A0A0A] text-white' : 'bg-white border-[#0A0A0A] text-[#0A0A0A]'
     }`}>
-      <Clock className="w-2.5 h-2.5" />
+      <Clock className="w-3 h-3" />
       {text}
     </div>
   );
@@ -221,50 +212,50 @@ const BoardPage: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="h-screen bg-[#0b0f1a] flex items-center justify-center">
-      <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+    <div className="h-screen bg-white flex items-center justify-center">
+      <Loader2 className="w-10 h-10 text-[#0A0A0A] animate-spin" />
     </div>
   );
 
   const columns: { id: TaskStatus; label: string }[] = [
-    { id: 'todo', label: 'To Do' },
-    { id: 'inprogress', label: 'In Progress' },
-    { id: 'done', label: 'Done' }
+    { id: 'todo', label: 'Backlog' },
+    { id: 'inprogress', label: 'Active' },
+    { id: 'done', label: 'Resolved' }
   ];
 
   return (
-    <div className="h-screen flex flex-col bg-[#0b0f1a] text-slate-200">
-      <header className="px-8 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/dashboard" className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-white transition-colors">
-            <ChevronLeft className="w-5 h-5" />
+    <div className="h-screen flex flex-col bg-white text-[#0A0A0A]">
+      <header className="px-8 py-8 flex items-center justify-between border-b-4 border-[#0A0A0A]">
+        <div className="flex items-center gap-6">
+          <Link to="/dashboard" className="p-3 bg-[#0A0A0A] rounded-xl text-white hover:bg-[#F5C842] hover:text-[#0A0A0A] transition-all">
+            <ChevronLeft className="w-6 h-6" />
           </Link>
-          <h1 className="text-xl font-semibold text-white tracking-tight">{board?.title}</h1>
+          <h1 className="text-3xl font-black text-[#0A0A0A] tracking-tighter uppercase">{board?.title}</h1>
         </div>
       </header>
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-6 px-8 pb-8 flex-1 overflow-x-auto">
+        <div className="flex gap-8 px-8 py-10 flex-1 overflow-x-auto bg-[#0A0A0A]/5">
           {columns.map(column => (
-            <div key={column.id} className="w-80 flex flex-col shrink-0">
-              <div className="flex items-center justify-between mb-4 px-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{column.label}</span>
-                <button onClick={() => handleOpenCreate(column.id)} className="p-1.5 hover:bg-slate-800 rounded-md text-slate-500 hover:text-indigo-400 transition-colors">
-                  <Plus className="w-4 h-4" />
+            <div key={column.id} className="w-96 flex flex-col shrink-0">
+              <div className="flex items-center justify-between mb-6 px-2">
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-[#0A0A0A]">{column.label}</span>
+                <button onClick={() => handleOpenCreate(column.id)} className="p-2 bg-white border-4 border-[#0A0A0A] rounded-xl text-[#0A0A0A] hover:bg-[#F5C842] transition-colors shadow-md">
+                  <Plus className="w-5 h-5" />
                 </button>
               </div>
               <Droppable droppableId={column.id}>
                 {(provided, snapshot) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef} onDoubleClick={() => handleOpenCreate(column.id)} className={`flex-1 rounded-2xl p-2 transition-colors min-h-[200px] cursor-cell ${snapshot.isDraggingOver ? 'bg-slate-900/40' : 'bg-transparent'}`}>
+                  <div {...provided.droppableProps} ref={provided.innerRef} onDoubleClick={() => handleOpenCreate(column.id)} className={`flex-1 transition-colors min-h-[200px] cursor-cell ${snapshot.isDraggingOver ? 'bg-[#F5C842]/10' : ''}`}>
                     {tasks.filter(t => t.status === column.id).map((task, index) => (
                       <Draggable key={task._id} draggableId={task._id} index={index}>
                         {(provided, snapshot) => (
-                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} onDoubleClick={(e) => handleOpenEdit(e, task)} className={`bg-[#161b26] border border-slate-800/40 p-4 rounded-2xl mb-3 cursor-pointer hover:border-indigo-500/50 transition-all ${snapshot.isDragging ? 'shadow-2xl ring-1 ring-indigo-500 bg-[#1c2331]' : 'hover:translate-y-[-2px]'}`}>
-                            <div className="flex justify-between items-start gap-4 mb-2">
-                              <h4 className="text-[13px] font-bold text-slate-100 leading-tight flex-1">{task.title}</h4>
+                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} onDoubleClick={(e) => handleOpenEdit(e, task)} className={`bg-white border-4 border-[#0A0A0A] p-6 rounded-2xl mb-6 cursor-pointer hover:bg-[#F5C842]/5 transition-all shadow-[8px_8px_0px_0px_rgba(10,10,10,1)] ${snapshot.isDragging ? 'rotate-3 scale-105 z-50' : ''}`}>
+                            <div className="flex justify-between items-start gap-4 mb-4">
+                              <h4 className="text-lg font-black text-[#0A0A0A] leading-tight flex-1 uppercase tracking-tight">{task.title}</h4>
                               {task.dueDate && <DeadlineCountdown dueDate={task.dueDate} status={task.status} />}
                             </div>
-                            <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">{task.description}</p>
+                            <p className="text-sm font-bold text-[#0A0A0A]/60 line-clamp-2 leading-relaxed mb-4">{task.description}</p>
                             <TaskAnalytics task={task} />
                           </div>
                         )}

@@ -1,19 +1,30 @@
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'Syne';
+  src: url('./assets/Syne/Syne-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  color-scheme: dark;
+  font-family: 'Syne', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  color-scheme: light;
   /* Smooth scrolling for the whole page */
   scroll-behavior: smooth;
+  --primary: #FFFFFF;
+  --secondary: #0A0A0A;
+  --accent: #F5C842;
 }
 
 body {
   margin: 0;
   padding: 0;
-  /* Remove display: flex and place-items: center to let it be full width */
   min-height: 100vh;
   width: 100%;
-  background-color: #0f172a; /* Matches the dark theme in the code below */
+  background-color: var(--primary);
+  color: var(--secondary);
 }
 
 #root {

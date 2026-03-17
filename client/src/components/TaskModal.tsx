@@ -125,67 +125,74 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#1e293b] border border-slate-700/50 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-        <header className="px-8 py-6 flex items-center justify-between bg-slate-800/20 border-b border-slate-700/30">
+      <div className="absolute inset-0 bg-[#0A0A0A]/80" onClick={onClose} />
+      <div className="relative bg-white border-4 border-[#0A0A0A] w-full max-w-lg rounded-[2.5rem] shadow-[16px_16px_0px_0px_rgba(10,10,10,1)] overflow-hidden animate-in zoom-in duration-200">
+        <header className="px-8 py-8 flex items-center justify-between border-b-4 border-[#0A0A0A]">
           <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-2xl ${isEditMode ? 'bg-amber-500/10 text-amber-400' : 'bg-indigo-500/10 text-indigo-400'}`}>
-              <Layout className="w-5 h-5" />
+            <div className={`p-3 rounded-2xl bg-[#0A0A0A] text-white`}>
+              <Layout className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">{isEditMode ? 'Edit Task' : 'New Task'}</h2>
+              <h2 className="text-2xl font-black text-[#0A0A0A] tracking-tighter uppercase">{isEditMode ? 'Modify' : 'Draft'} Task</h2>
               {isEditMode && totalMs > 0 && (
-                <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-                  <Timer className={`w-3 h-3 ${task?.status === 'inprogress' ? 'text-indigo-400 animate-pulse' : ''}`} />
+                <p className="text-[10px] text-[#0A0A0A]/40 font-black uppercase flex items-center gap-1 mt-0.5">
+                  <Timer className={`w-3.5 h-3.5 ${task?.status === 'inprogress' ? 'text-[#F5C842] animate-pulse' : ''}`} />
                   {task?.status === 'inprogress' ? 'Clocking: ' : 'Banked: '} {formatBankedTime(totalMs)}
                 </p>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors"><X /></button>
+          <button onClick={onClose} className="p-2 text-[#0A0A0A] hover:text-[#F5C842] transition-colors"><X size={32} strokeWidth={3} /></button>
         </header>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-5 overflow-y-auto max-h-[80vh]">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto max-h-[80vh]">
           <div className="space-y-4">
-            <input required autoFocus placeholder="Task Title" className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none transition-all" value={title} onChange={(e) => setTitle(e.target.value)} />
-            <textarea placeholder="Description" rows={2} className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none resize-none text-sm" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <label className="block text-xs font-black text-[#0A0A0A] uppercase tracking-widest px-1">Concept & Title</label>
+            <input required autoFocus placeholder="What needs doing?" className="w-full bg-white border-4 border-[#0A0A0A] rounded-2xl p-4 text-[#0A0A0A] focus:bg-[#F5C842]/10 outline-none font-bold" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <textarea placeholder="The finer details..." rows={2} className="w-full bg-white border-4 border-[#0A0A0A] rounded-2xl p-4 text-[#0A0A0A] focus:bg-[#F5C842]/10 outline-none resize-none font-bold" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"><Hourglass className="w-3.5 h-3.5 text-indigo-400" /> Goal</label>
+              <label className="flex items-center gap-2 text-[10px] font-black text-[#0A0A0A] uppercase tracking-widest px-1">
+                <Hourglass className="w-4 h-4 text-[#F5C842]" /> 
+                Allocated Time
+              </label>
               <div className="flex gap-2">
-                <input type="number" step="any" placeholder="0" className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none" value={targetValue} onChange={(e) => setTargetValue(e.target.value)} />
-                <select value={targetUnit} onChange={(e) => setTargetUnit(e.target.value as any)} className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none cursor-pointer">
-                  <option value="m">Min</option>
-                  <option value="h">Hrs</option>
-                  <option value="d">Days</option>
+                <input type="number" step="any" placeholder="0" className="w-full bg-white border-4 border-[#0A0A0A] rounded-2xl p-4 text-[#0A0A0A] outline-none font-black" value={targetValue} onChange={(e) => setTargetValue(e.target.value)} />
+                <select value={targetUnit} onChange={(e) => setTargetUnit(e.target.value as any)} className="bg-white border-4 border-[#0A0A0A] rounded-2xl p-4 text-[#0A0A0A] outline-none cursor-pointer font-black appearance-none">
+                  <option value="m">M</option>
+                  <option value="h">H</option>
+                  <option value="d">D</option>
                 </select>
               </div>
             </div>
             <div className="space-y-3">
-               <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">State</label>
-               <select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none">
-                 <option value="todo">To Do</option>
-                 <option value="inprogress">In Progress</option>
-                 <option value="done">Done</option>
+               <label className="flex items-center gap-2 text-[10px] font-black text-[#0A0A0A] uppercase tracking-widest px-1">Workflow State</label>
+               <select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} className="w-full bg-white border-4 border-[#0A0A0A] rounded-2xl p-4 text-[#0A0A0A] outline-none font-black cursor-pointer appearance-none">
+                 <option value="todo">BACKLOG</option>
+                 <option value="inprogress">ACTIVE</option>
+                 <option value="done">RESOLVED</option>
                </select>
             </div>
           </div>
+
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"><Clock className="w-3.5 h-3.5" /> Deadline</label>
-            <input type="datetime-local" className="w-full bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none [color-scheme:dark]" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            <label className="flex items-center gap-2 text-[10px] font-black text-[#0A0A0A] uppercase tracking-widest px-1"><Clock className="w-4 h-4 text-[#F5C842]" /> Hard Deadline</label>
+            <input type="datetime-local" className="w-full bg-white border-4 border-[#0A0A0A] rounded-2xl p-4 text-[#0A0A0A] outline-none font-black [color-scheme:light]" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             <div className="flex gap-2">
-              <button type="button" onClick={() => handleQuickDate(2, 0)} className="flex-1 py-2 rounded-xl bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-300 hover:border-indigo-500 transition-colors">+ 2h</button>
-              <button type="button" onClick={() => handleQuickDate(0, 2)} className="flex-1 py-2 rounded-xl bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-300 hover:border-indigo-500 transition-colors">+ 2d</button>
-              <button type="button" onClick={() => setDueDate('')} className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-[10px] font-bold text-red-400">Clear</button>
+              <button type="button" onClick={() => handleQuickDate(2, 0)} className="flex-1 py-3 rounded-xl bg-white border-4 border-[#0A0A0A] text-xs font-black text-[#0A0A0A] hover:bg-[#F5C842] transition-colors shadow-sm">+ 2H</button>
+              <button type="button" onClick={() => handleQuickDate(0, 2)} className="flex-1 py-3 rounded-xl bg-white border-4 border-[#0A0A0A] text-xs font-black text-[#0A0A0A] hover:bg-[#F5C842] transition-colors shadow-sm">+ 2D</button>
+              <button type="button" onClick={() => setDueDate('')} className="px-5 py-3 rounded-xl bg-white border-4 border-[#0A0A0A] text-xs font-black text-rose-500 hover:bg-rose-50 transition-colors shadow-sm">X</button>
             </div>
           </div>
-          <div className="flex gap-3 pt-4">
+
+          <div className="flex gap-4 pt-4">
             {isEditMode && (
-              <button type="button" onClick={async () => { if(window.confirm("Delete?")) { await taskService.deleteTask(task._id); onSuccess(); onClose(); } }} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-5 h-5" /></button>
+              <button type="button" onClick={async () => { if(window.confirm("Archive this task permanently?")) { await taskService.deleteTask(task._id); onSuccess(); onClose(); } }} className="p-4 bg-white border-4 border-rose-500 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-md"><Trash2 className="w-6 h-6" /></button>
             )}
-            <button type="submit" disabled={isSubmitting} className="flex-1 p-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20">
-              {isSubmitting ? 'Saving...' : 'Save Task'}
+            <button type="submit" disabled={isSubmitting} className="flex-1 p-4 bg-[#0A0A0A] text-white rounded-2xl font-black uppercase text-sm tracking-[0.2em] hover:bg-[#F5C842] hover:text-[#0A0A0A] transition-all shadow-lg active:scale-95">
+              {isSubmitting ? 'Syncing...' : 'Finalize Task'}
             </button>
           </div>
         </form>

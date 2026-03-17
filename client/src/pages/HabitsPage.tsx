@@ -71,23 +71,23 @@ const HabitsPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-8 text-slate-300">
+    <div className="max-w-6xl mx-auto px-8 py-8 text-[#0A0A0A]">
       
       {/* ── Minimal Header ── */}
-      <div className="flex items-end justify-between mb-10 pb-4 border-b border-slate-800/50">
+      <div className="flex items-end justify-between mb-10 pb-4 border-b-4 border-[#0A0A0A]">
         <div>
-          <h1 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="text-indigo-500 text-base">●</span>
+          <h1 className="text-2xl font-black text-[#0A0A0A] flex items-center gap-2 uppercase tracking-tighter">
+            <span className="text-[#F5C842]">●</span>
             Habit Tracker
           </h1>
           <div className="flex items-center gap-4 mt-1">
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 uppercase tracking-wider font-medium">
-              <CalendarDays size={12} />
+            <div className="flex items-center gap-1.5 text-[11px] text-[#0A0A0A]/60 uppercase tracking-wider font-black">
+              <CalendarDays size={12} className="text-[#F5C842]" />
               {getWeekLabel()}
             </div>
             <button
               onClick={handleRefresh}
-              className="text-[10px] text-slate-600 hover:text-indigo-400 transition-colors flex items-center gap-1"
+              className="text-[10px] text-[#0A0A0A]/40 hover:text-[#F5C842] transition-colors flex items-center gap-1 font-black uppercase"
             >
               <RefreshCw size={10} className={refreshing ? 'animate-spin' : ''} />
               Sync
@@ -97,7 +97,7 @@ const HabitsPage: React.FC = () => {
 
         <button
           onClick={() => setModal({ open: true })}
-          className="flex items-center gap-1 px-2.5 py-1 rounded border border-slate-700 hover:border-slate-500 hover:bg-slate-800 text-[11px] font-medium transition-all"
+          className="flex items-center gap-1 px-4 py-2 rounded-xl bg-[#0A0A0A] text-white hover:bg-[#F5C842] hover:text-[#0A0A0A] text-[11px] font-black uppercase transition-all shadow-md"
         >
           <Plus size={12} />
           New Habit
@@ -105,26 +105,26 @@ const HabitsPage: React.FC = () => {
       </div>
 
       {/* ── Mini Dashboard ── */}
-      <div className="mb-8 opacity-80 scale-95 origin-left">
+      <div className="mb-12 origin-left">
         <HabitsDashboard items={items} />
       </div>
 
       {/* ── Table Section ── */}
       <div className="group">
-        <div className="flex items-center gap-2 mb-2 px-1">
-          <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">
+        <div className="flex items-center gap-2 mb-4 px-1">
+          <div className="text-xs font-black uppercase tracking-[0.2em] text-[#0A0A0A]">
             Current Routine
           </div>
-          <div className="h-[1px] flex-1 bg-slate-800/50" />
-          <div className="text-[10px] text-slate-700 tabular-nums">count: {items.length}</div>
+          <div className="h-[2px] flex-1 bg-[#0A0A0A]/10" />
+          <div className="text-[10px] text-[#0A0A0A]/40 font-black uppercase tabular-nums">count: {items.length}</div>
         </div>
 
         {items.length === 0 ? (
-          <div className="py-12 rounded border border-dashed border-slate-800 flex flex-col items-center justify-center">
-            <p className="text-[11px] text-slate-600">No data available in this view</p>
+          <div className="py-20 rounded-3xl border-4 border-dashed border-[#0A0A0A]/10 flex flex-col items-center justify-center bg-white">
+            <p className="text-sm text-[#0A0A0A]/40 font-bold">No habits found. Start your routine today.</p>
           </div>
         ) : (
-          <div className="rounded-sm border border-slate-800 bg-[#0b0f1a]/30">
+          <div className="rounded-2xl border-4 border-[#0A0A0A] bg-white overflow-hidden shadow-[8px_8px_0px_0px_rgba(10,10,10,1)]">
             <WeeklyHabitTracker
               items={items}
               onToggle={handleToggle}
@@ -135,10 +135,10 @@ const HabitsPage: React.FC = () => {
             {/* Inline Add Row (Spreadsheet Style) */}
             <button
               onClick={() => setModal({ open: true })}
-              className="w-full flex items-center gap-2 px-4 py-1.5 text-[11px] text-slate-600 hover:text-slate-400 hover:bg-slate-800/40 border-t border-slate-800 transition-all text-left"
+              className="w-full flex items-center gap-2 px-6 py-4 text-xs text-[#0A0A0A]/60 font-black uppercase hover:bg-[#F5C842]/10 border-t-2 border-[#0A0A0A]/10 transition-all text-left"
             >
-              <Plus size={12} />
-              New row
+              <Plus size={12} className="text-[#F5C842]" />
+              Add new entry
             </button>
           </div>
         )}

@@ -140,9 +140,28 @@ class HabitService {
 
     if (completed) {
       await this.updateStreaksAndMultiplier(habit);
+    } else {
+      await this.revertStreaksAndPoints(habit);
     }
 
     return updatedLog;
+  }
+
+  private async revertStreaksAndPoints(habit: IHabit) {
+    const basePoints = 10;
+    const earnedPoints = Math.round(basePoints * habit.multiplier);
+    
+    // Remove the points earned for this completion
+    habit.totalPoints = Math.max(0, (habit.totalPoints || 0) - earnedPoints);
+    
+    // Reset daily streak when uncompleted
+    habit.dailyStreak = 0;
+    
+    // Recalculate multiplier based on new streak
+    const multiplierBonus = Math.floor(habit.dailyStreak / 7) * 0.1;
+    habit.multiplier = Number((1 + multiplierBonus).toFixed(2));
+    
+    await habit.save();
   }
 
   private async updateStreaksAndMultiplier(habit: IHabit) {
