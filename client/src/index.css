@@ -16,6 +16,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Sora';
+  src: url('./assets/Sora/Sora-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   font-family: 'Space Grotesk', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   color-scheme: light;
@@ -24,6 +32,12 @@
   --primary: #FFFFFF;
   --secondary: #0A0A0A;
   --accent: #F5C842;
+}
+
+strong, b, 
+h1, h2, h3, h4, h5, h6,
+[class*="font-bold"], [class*="font-semibold"], [class*="font-black"], [class*="font-extrabold"], .font-medium {
+  font-family: 'Sora', sans-serif;
 }
 
 .logo-font {
