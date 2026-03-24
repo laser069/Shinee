@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Flame, MoreHorizontal } from 'lucide-react';
+import { Check, Flame, MoreHorizontal, Trash2 } from 'lucide-react';
 import type { DashboardItem } from '../types';
 
 interface Props {
@@ -93,6 +93,12 @@ const HabitRow: React.FC<{
             className="p-1 text-[#0A0A0A]/40 hover:text-[#0A0A0A]"
           >
             <MoreHorizontal size={16} />
+          </button>
+          <button 
+            onClick={() => onDelete(habit._id)}
+            className="p-1 text-[#0A0A0A]/40 hover:text-red-500"
+          >
+            <Trash2 size={16} />
           </button>
         </div>
       </div>
