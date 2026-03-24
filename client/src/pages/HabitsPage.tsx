@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import habitService from '../services/habitService';
 import { HabitModal } from '../components/HabitModal';
 import { WeeklyHabitTracker } from '../components/WeeklyHabitTracker';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import type { DashboardItem, Habit } from '../types';
 import { HabitsDashboard } from '../components/HabitsDashboard';
 import { Plus, RefreshCw, CheckSquare, CalendarDays } from 'lucide-react';
@@ -24,6 +25,7 @@ const HabitsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [modal, setModal] = useState<{ open: boolean; habit?: Habit }>({ open: false });
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; habitId?: string; habitName?: string }>({ open: false });
 
   useEffect(() => {
     fetchHabits();
@@ -57,8 +59,16 @@ const HabitsPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete habit?')) return;
-    await habitService.deleteHabit(id);
+    const item = items.find(i => i.habit._id === id);
+    if (item) {
+      setDeleteModal({ open: true, habitId: id, habitName: item.habit.name });
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.habitId) return;
+    await habitService.deleteHabit(deleteModal.habitId);
+    setDeleteModal({ open: false });
     fetchHabits(true);
   };
 
@@ -152,6 +162,14 @@ const HabitsPage: React.FC = () => {
           onSuccess={() => fetchHabits(true)}
         />
       )}
+
+      {/* ── Delete Confirmation Modal ── */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.open}
+        habitName={deleteModal.habitName || ''}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteModal({ open: false })}
+      />
     </div>
   );
 };
