@@ -8,14 +8,26 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('./assets/Space_Grotesk/SpaceGrotesk-VariableFont_wght.ttf') format('truetype');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  font-family: 'Syne', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Space Grotesk', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   color-scheme: light;
   /* Smooth scrolling for the whole page */
   scroll-behavior: smooth;
   --primary: #FFFFFF;
   --secondary: #0A0A0A;
   --accent: #F5C842;
+}
+
+.logo-font {
+  font-family: 'Syne', sans-serif !important;
 }
 
 body {

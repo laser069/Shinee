@@ -14,7 +14,7 @@ export const Navbar: React.FC = () => {
           onClick={() => navigate(isAuthenticated ? '/dashboard' : '/')}
         >
           <div className="bg-[#0A0A0A] px-4 py-2 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
-            <span className="text-xl font-black tracking-tighter text-white flex">
+            <span className="text-xl font-black tracking-tighter text-white flex logo-font">
               SH<span className="text-[#F5C842]">I</span>NEE
             </span>
           </div>
