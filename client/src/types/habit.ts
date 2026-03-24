@@ -20,7 +20,6 @@ export interface WeeklyLog {
 export interface Habit {
     _id: string;
     name: string;
-    icon: string;
     color: string;
     frequencyType: FrequencyType;
     fixedDays: number[];
@@ -40,7 +39,6 @@ export interface DashboardItem {
 
 export interface CreateHabitPayload {
   name: string;
-  icon: string;
   frequencyType: 'flexible' | 'fixed';
   goalCount: number;
   fixedDays?: number[]; // Make optional

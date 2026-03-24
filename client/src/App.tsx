@@ -10,14 +10,10 @@ import HabitsPage from './pages/HabitsPage';
 
 function App() {
   return (
-    <div className="min-h-screen w-full bg-[#0f172a] text-slate-200 overflow-x-hidden">
+    <div className="min-h-screen w-full bg-white text-[#0A0A0A] overflow-x-hidden">
       <Navbar />
 
        <main className="w-full relative flex-1">
-        {/* Visual Background Flair */}
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
-
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<div className="w-full max-w-7xl mx-auto px-6 py-12"><HomeHero /></div>} />
@@ -79,25 +75,25 @@ const HomeHero = () => {
   const navigate = useNavigate();
   return (
     <div className="text-center animate-in fade-in zoom-in duration-700">
-      <h1 className="text-6xl md:text-8xl font-black text-white mb-8 tracking-tighter">
+      <h1 className="text-6xl md:text-8xl font-black text-[#0A0A0A] mb-8 tracking-tighter">
         MASTER YOUR <br /> 
-        <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent">
+        <span className="text-[#F5C842] uppercase">
           ROUTINE.
         </span>
       </h1>
-      <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
-        The ultimate productivity hub. Manage high-intensity Kanban boards and professional Notion-style habit trackers in one unified workspace.
+      <p className="text-xl text-[#0A0A0A]/60 max-w-2xl mx-auto mb-10 leading-relaxed font-bold">
+        The ultimate productivity hub. Manage high-intensity Kanban boards and professional habit trackers in one unified workspace.
       </p>
       <div className="flex flex-wrap justify-center gap-4">
          <button 
            onClick={() => navigate('/register')}
-           className="px-10 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20"
+           className="px-10 py-4 bg-[#0A0A0A] text-white font-black rounded-2xl hover:bg-[#F5C842] hover:text-[#0A0A0A] transition-all shadow-xl shadow-black/10"
          >
            Get Started Today
          </button>
          <button 
            onClick={() => navigate('/login')}
-           className="px-10 py-4 bg-slate-800 text-white font-bold rounded-2xl border border-slate-700 hover:bg-slate-700 transition-all"
+           className="px-10 py-4 bg-white text-[#0A0A0A] font-black rounded-2xl border-4 border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all flex items-center gap-2"
          >
            Sign In
          </button>

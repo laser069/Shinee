@@ -23,19 +23,19 @@ export const HabitsDashboard: React.FC<HabitsDashboardProps> = ({ items }) => {
   }).length;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 border border-slate-800 rounded-sm bg-[#0b0f1a]/20 divide-x divide-slate-800">
+    <div className="grid grid-cols-2 md:grid-cols-4 border-4 border-[#0A0A0A] rounded-2xl bg-white divide-x-2 divide-[#0A0A0A] overflow-hidden shadow-[8px_8px_0px_0px_rgba(10,10,10,1)]">
       
       {/* Average Completion */}
-      <div className="px-4 py-3 flex flex-col gap-1">
-        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-          <Target size={12} className="text-indigo-400" />
+      <div className="px-6 py-5 flex flex-col gap-1">
+        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#0A0A0A]/40">
+          <Target size={12} className="text-[#F5C842]" />
           Completion
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-lg font-semibold text-slate-200">{Math.round(averageProgress)}%</span>
-          <div className="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden max-w-[40px]">
+          <span className="text-xl font-black text-[#0A0A0A]">{Math.round(averageProgress)}%</span>
+          <div className="flex-1 h-2 bg-[#0A0A0A]/10 rounded-full overflow-hidden max-w-[40px] border border-[#0A0A0A]/20">
             <div 
-              className="h-full bg-indigo-500" 
+              className="h-full bg-[#0A0A0A]" 
               style={{ width: `${averageProgress}%` }}
             />
           </div>
@@ -43,38 +43,38 @@ export const HabitsDashboard: React.FC<HabitsDashboardProps> = ({ items }) => {
       </div>
 
       {/* Streak Count */}
-      <div className="px-4 py-3 flex flex-col gap-1">
-        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-          <Flame size={12} className="text-orange-500" />
+      <div className="px-6 py-5 flex flex-col gap-1">
+        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#0A0A0A]/40">
+          <Flame size={12} className="text-[#F5C842]" />
           Total Streak
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-lg font-semibold text-slate-200">{totalDailyStreak}</span>
-          <span className="text-[10px] text-slate-600 font-medium">days</span>
+          <span className="text-xl font-black text-[#0A0A0A]">{totalDailyStreak}</span>
+          <span className="text-[10px] text-[#0A0A0A]/60 font-black uppercase">days</span>
         </div>
       </div>
 
       {/* Experience Points */}
-      <div className="px-4 py-3 flex flex-col gap-1">
-        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-          <Award size={12} className="text-emerald-500" />
+      <div className="px-6 py-5 flex flex-col gap-1">
+        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#0A0A0A]/40">
+          <Award size={12} className="text-[#F5C842]" />
           Discipline
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-lg font-semibold text-slate-200">{totalPoints.toLocaleString()}</span>
-          <span className="text-[10px] text-slate-600 font-medium uppercase tracking-tighter">XP</span>
+          <span className="text-xl font-black text-[#0A0A0A]">{totalPoints.toLocaleString()}</span>
+          <span className="text-[10px] text-[#0A0A0A]/60 font-black uppercase tracking-tighter">XP</span>
         </div>
       </div>
 
       {/* Daily Status */}
-      <div className="px-4 py-3 flex flex-col gap-1">
-        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-          <CheckCircle2 size={12} className="text-pink-500" />
+      <div className="px-6 py-5 flex flex-col gap-1">
+        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#0A0A0A]/40">
+          <CheckCircle2 size={12} className="text-[#F5C842]" />
           Today
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-lg font-semibold text-slate-200">{completedToday}</span>
-          <span className="text-[10px] text-slate-600 font-medium">/ {items.length} habits</span>
+          <span className="text-xl font-black text-[#0A0A0A]">{completedToday}</span>
+          <span className="text-[10px] text-[#0A0A0A]/60 font-black uppercase">/ {items.length} habits</span>
         </div>
       </div>
 

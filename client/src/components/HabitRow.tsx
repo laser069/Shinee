@@ -1,3 +1,6 @@
+import React, { useMemo } from 'react';
+import type { DashboardItem } from '../types';
+
 const calculateStreak = (days: any) => {
   let streak = 0;
   const today = (new Date().getDay() + 6) % 7;
@@ -13,7 +16,7 @@ const calculateStreak = (days: any) => {
   return streak;
 };
 
-const HabitRow: React.FC<{...}> = ({ item, todayIdx, onToggle }) => {
+const HabitRow: React.FC<{ item: DashboardItem; todayIdx: number; onToggle: (id: string, idx: number) => void }> = ({ item, todayIdx, onToggle }) => {
   const { habit, currentLog } = item;
   const streak = useMemo(() => calculateStreak(currentLog.days), [currentLog.days]);
 
@@ -24,9 +27,6 @@ const HabitRow: React.FC<{...}> = ({ item, todayIdx, onToggle }) => {
       
       {/* 1. Identity & Metadata */}
       <div className="w-96 flex items-center gap-6">
-        <span className={`text-4xl transition-all duration-700 ${streak > 0 ? 'scale-110' : 'grayscale opacity-50'}`}>
-          {habit.icon}
-        </span>
         <div className="flex flex-col">
           <h3 className="text-xl font-bold text-slate-100 tracking-tight leading-none">
             {habit.name}
