@@ -5,7 +5,7 @@ import { WeeklyHabitTracker } from '../components/WeeklyHabitTracker';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import type { DashboardItem, Habit } from '../types';
 import { HabitsDashboard } from '../components/HabitsDashboard';
-import { Plus, RefreshCw, CheckSquare, CalendarDays } from 'lucide-react';
+import { Plus, RefreshCw, CalendarDays } from 'lucide-react';
 
 const getWeekLabel = () => {
   const now = new Date();
@@ -166,7 +166,8 @@ const HabitsPage: React.FC = () => {
       {/* ── Delete Confirmation Modal ── */}
       <DeleteConfirmModal
         isOpen={deleteModal.open}
-        habitName={deleteModal.habitName || ''}
+        name={deleteModal.habitName || ''}
+        title="Delete Habit?"
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteModal({ open: false })}
       />

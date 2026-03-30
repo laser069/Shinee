@@ -54,15 +54,15 @@ const HabitRow: React.FC<{
                 ${isToday ? 'bg-[#F5C842]/5' : ''}`}
             >
               <button
-                disabled={!isScheduled}
+                disabled={!isScheduled || idx > todayIdx}
                 onClick={() => onToggle(habit._id, idx)}
                 className={`
                   w-6 h-6 rounded-lg flex items-center justify-center transition-all border-2
                   ${isDone 
                     ? 'bg-[#0A0A0A] border-[#0A0A0A] text-white' 
-                    : isScheduled 
+                    : isScheduled && idx <= todayIdx
                       ? 'border-[#0A0A0A]/20 hover:border-[#0A0A0A] bg-white' 
-                      : 'opacity-0 cursor-not-allowed'
+                      : 'border-[#0A0A0A]/5 bg-[#0A0A0A]/5 cursor-not-allowed'
                   }
                   ${isToday && !isDone && isScheduled ? 'ring-2 ring-[#F5C842] ring-offset-1' : ''}
                 `}
