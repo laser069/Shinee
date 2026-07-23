@@ -7,6 +7,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import BoardDetailsPage from './pages/BoardDetailsPage';
 import DashboardPage from './pages/DashboardPage';
 import HabitsPage from './pages/HabitsPage';
+import StatsPage from './pages/StatsPage';
 
 function App() {
   return (
@@ -54,8 +55,17 @@ function App() {
             } 
           />
 
-          <Route 
-            path="/profile" 
+          <Route
+            path="/stats"
+            element={
+              <ProtectedRoute>
+                <StatsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
             element={
               <ProtectedRoute>
                 <div className="w-full max-w-4xl mx-auto px-6 py-12">
