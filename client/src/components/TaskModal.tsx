@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import taskService from '../services/taskService';
-import type { Task, TaskStatus } from '../types';
-import { Layout, X, Trash2, Clock, Timer, Hourglass } from 'lucide-react';
+import type { Task, TaskStatus, Tag } from '../types';
+import { TAG_COLORS } from '../types';
+import { Layout, X, Trash2, Clock, Timer, Hourglass, Tag as TagIcon } from 'lucide-react';
+import { TagChip } from './TagChip';
 
 interface TaskModalProps {
   boardId: string;
@@ -20,6 +22,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
   const [targetUnit, setTargetUnit] = useState<'m' | 'h' | 'd'>('h');
   const [now, setNow] = useState(Date.now());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState<string>(TAG_COLORS[0]);
 
   const isEditMode = !!task;
 
@@ -40,7 +45,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
       setTitle(task.title);
       setDescription(task.description || '');
       setStatus(task.status);
-      
+      setTags(task.tags || []);
+
       const ms = task.targetDuration;
       if (ms) {
         if (ms >= 86400000 && ms % 86400000 === 0) {
@@ -70,8 +76,24 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
       setTargetValue('');
       setTargetUnit('h');
       setDueDate('');
+      setTags([]);
     }
   }, [task, defaultStatus]);
+
+  const handleAddTag = () => {
+    const name = newTagName.trim();
+    if (!name) return;
+    if (tags.some(t => t.name === name && t.color === newTagColor)) {
+      setNewTagName('');
+      return;
+    }
+    setTags(prev => [...prev, { name, color: newTagColor }]);
+    setNewTagName('');
+  };
+
+  const handleRemoveTag = (index: number) => {
+    setTags(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleQuickDate = (hours = 0, days = 0) => {
     const d = new Date();
@@ -103,12 +125,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
       if (targetUnit === 'd') mult = 86400000;
       const targetDurationMs = targetValue ? parseFloat(targetValue) * mult : 0;
 
-      const payload = { 
-        title: title.trim(), 
-        description: description.trim(), 
-        status, 
+      const payload = {
+        title: title.trim(),
+        description: description.trim(),
+        status,
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
-        targetDuration: targetDurationMs 
+        targetDuration: targetDurationMs,
+        tags,
       };
 
       if (isEditMode && task) await taskService.updateTask(task._id, payload);
@@ -184,6 +207,40 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
               <button type="button" onClick={() => handleQuickDate(2, 0)} className="flex-1 py-3 rounded-xl bg-white border-4 border-[#0A0A0A] text-xs font-black text-[#0A0A0A] hover:bg-[#F5C842] transition-colors shadow-sm">+ 2H</button>
               <button type="button" onClick={() => handleQuickDate(0, 2)} className="flex-1 py-3 rounded-xl bg-white border-4 border-[#0A0A0A] text-xs font-black text-[#0A0A0A] hover:bg-[#F5C842] transition-colors shadow-sm">+ 2D</button>
               <button type="button" onClick={() => setDueDate('')} className="px-5 py-3 rounded-xl bg-white border-4 border-[#0A0A0A] text-xs font-black text-rose-500 hover:bg-rose-50 transition-colors shadow-sm">X</button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-[10px] font-black text-[#0A0A0A] uppercase tracking-widest px-1"><TagIcon className="w-4 h-4 text-[#F5C842]" /> Tags</label>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag, i) => (
+                  <TagChip key={`${tag.name}-${tag.color}-${i}`} tag={tag} onRemove={() => handleRemoveTag(i)} />
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Tag name"
+                maxLength={30}
+                className="flex-1 bg-white border-4 border-[#0A0A0A] rounded-2xl p-3 text-[#0A0A0A] outline-none font-bold text-sm"
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
+              />
+              <button type="button" onClick={handleAddTag} className="px-5 py-3 bg-[#0A0A0A] text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#F5C842] hover:text-[#0A0A0A] transition-all">Add</button>
+            </div>
+            <div className="flex gap-2">
+              {TAG_COLORS.map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setNewTagColor(color)}
+                  className={`w-8 h-8 rounded-full border-2 transition-all ${newTagColor === color ? 'border-[#0A0A0A] scale-110' : 'border-[#0A0A0A]/20'}`}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
             </div>
           </div>
 

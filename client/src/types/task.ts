@@ -1,6 +1,13 @@
 export type TaskStatus = 'todo' | 'inprogress' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high';
 
+export const TAG_COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#3b82f6', '#a855f7'] as const;
+
+export interface Tag {
+  name: string;
+  color: string;
+}
+
 export interface Task {
   _id: string;
   boardId: string;
@@ -14,7 +21,8 @@ export interface Task {
   totalTimeSpent: number;            // Accumulated ms (The "Bank")
   activeStartTime?: string | null;   // ISO string of current session start
   targetDuration: number;            // The goal in ms (e.g., 7200000 for 2h)
-  
+  tags: Tag[];
+
   createdAt: string;
   updatedAt: string;
 }
@@ -27,6 +35,7 @@ export interface CreateTaskPayload {
   priority?: TaskPriority;
   dueDate?: string | null;
   targetDuration?: number; // Optional: allow setting a custom goal on create
+  tags?: Tag[];
 }
 
 export interface UpdateTaskPayload {
@@ -36,6 +45,7 @@ export interface UpdateTaskPayload {
   priority?: TaskPriority;
   dueDate?: string | null;
   targetDuration?: number;
-  // Note: We don't usually include activeStartTime here because 
+  tags?: Tag[];
+  // Note: We don't usually include activeStartTime here because
   // the Service handles that automatically based on status changes.
 }
