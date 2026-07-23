@@ -5,6 +5,11 @@ export interface ITag {
   color: string;
 }
 
+export interface IRecurrence {
+  type: 'daily' | 'weekly';
+  interval: number;
+}
+
 export interface ITask extends Document {
   title: string;
   description?: string;
@@ -16,6 +21,7 @@ export interface ITask extends Document {
   activeStartTime?: Date | null;
   targetDuration: number;
   tags: ITag[];
+  recurrence?: IRecurrence | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +29,11 @@ export interface ITask extends Document {
 const tagSchema = new Schema<ITag>({
   name: { type: String, required: true, trim: true, maxlength: 30 },
   color: { type: String, required: true },
+}, { _id: false });
+
+const recurrenceSchema = new Schema<IRecurrence>({
+  type: { type: String, enum: ['daily', 'weekly'], required: true },
+  interval: { type: Number, default: 1, min: 1 },
 }, { _id: false });
 
 const taskSchema = new Schema<ITask>({
@@ -43,6 +54,7 @@ const taskSchema = new Schema<ITask>({
   targetDuration: { type: Number }, // Optional, no hardcoded default
 
   tags: { type: [tagSchema], default: [] },
+  recurrence: { type: recurrenceSchema, default: null },
 }, { timestamps: true });
 
 // Exporting as "Task"

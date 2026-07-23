@@ -51,8 +51,8 @@ const CalendarPage: React.FC = () => {
     setTasks(prev => prev.map(t => t._id === taskId ? { ...t, dueDate: newDueDate } : t));
 
     try {
-      const response = await taskService.updateTask(taskId, { dueDate: newDueDate });
-      setTasks(prev => prev.map(t => t._id === taskId ? response : t));
+      const { task: updatedTask } = await taskService.updateTask(taskId, { dueDate: newDueDate });
+      setTasks(prev => prev.map(t => t._id === taskId ? updatedTask : t));
     } catch {
       setTasks(oldTasks);
     }

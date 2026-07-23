@@ -9,6 +9,11 @@ export const TagSchema = z.object({
   color: z.enum(TAG_COLORS),
 });
 
+export const RecurrenceSchema = z.object({
+  type: z.enum(['daily', 'weekly']),
+  interval: z.number().int().min(1).default(1),
+}).nullable().optional();
+
 export const TaskSchema = z.object({
   _id: z.string().optional(),
   title: z
@@ -37,6 +42,9 @@ export const TaskSchema = z.object({
 
   // 5. TAGS/LABELS (fixed color palette)
   tags: z.array(TagSchema).default([]),
+
+  // 6. RECURRENCE RULE (daily/weekly v1)
+  recurrence: RecurrenceSchema,
 
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),

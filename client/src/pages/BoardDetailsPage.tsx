@@ -6,7 +6,7 @@ import taskService from '../services/taskService';
 import { TaskModal } from '../components/TaskModal';
 import { TagFilterBar } from '../components/TagFilterBar';
 import { TagChip } from '../components/TagChip';
-import { Plus, Loader2, ChevronLeft, Clock, Timer, AlertCircle } from 'lucide-react';
+import { Plus, Loader2, ChevronLeft, Clock, Timer, AlertCircle, Repeat } from 'lucide-react';
 import type { Board, Task, TaskStatus, Tag } from '../types';
 
 // --- SUB-COMPONENT: REAL-TIME ANALYTICS ---
@@ -195,8 +195,11 @@ const BoardPage: React.FC = () => {
     }));
 
     try {
-      const response = await taskService.updateTask(draggableId, { status: newStatus });
-      setTasks(prev => prev.map(t => t._id === draggableId ? response : t));
+      const { task: updatedTask, recurredTask } = await taskService.updateTask(draggableId, { status: newStatus });
+      setTasks(prev => {
+        const next = prev.map(t => t._id === draggableId ? updatedTask : t);
+        return recurredTask ? [...next, recurredTask] : next;
+      });
     } catch (err) {
       setTasks(oldTasks);
     }
@@ -262,7 +265,10 @@ const BoardPage: React.FC = () => {
                         {(provided, snapshot) => (
                           <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} onDoubleClick={(e) => handleOpenEdit(e, task)} className={`bg-white border-4 border-[#0A0A0A] p-6 rounded-2xl mb-6 cursor-pointer hover:bg-[#F5C842]/5 transition-all shadow-[8px_8px_0px_0px_rgba(10,10,10,1)] ${snapshot.isDragging ? 'rotate-3 scale-105 z-50' : ''}`}>
                             <div className="flex justify-between items-start gap-4 mb-4">
-                              <h4 className="text-lg font-black text-[#0A0A0A] leading-tight flex-1 uppercase tracking-tight">{task.title}</h4>
+                              <h4 className="text-lg font-black text-[#0A0A0A] leading-tight flex-1 uppercase tracking-tight flex items-center gap-2">
+                                {task.recurrence && <Repeat className="w-4 h-4 text-[#F5C842] shrink-0" />}
+                                {task.title}
+                              </h4>
                               {task.dueDate && <DeadlineCountdown dueDate={task.dueDate} status={task.status} />}
                             </div>
                             <p className="text-sm font-bold text-[#0A0A0A]/60 line-clamp-2 leading-relaxed mb-4">{task.description}</p>

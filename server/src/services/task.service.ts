@@ -1,8 +1,15 @@
-import Task from '../models/Task';
+import dayjs from 'dayjs';
+import Task, { IRecurrence } from '../models/Task';
 import Board from '../models/Board';
 import { CreateTaskPayload, UpdateTaskPayload } from '../schemas/task.schema';
 
 class TaskService {
+  private computeNextDueDate(base: Date | undefined, recurrence: IRecurrence): Date {
+    const anchor = base ? dayjs(base) : dayjs();
+    const unit = recurrence.type === 'daily' ? 'day' : 'week';
+    return anchor.add(recurrence.interval, unit).toDate();
+  }
+
   async createTask(userId: string, boardId: string, data: CreateTaskPayload) {
     const { dueDate, targetDuration, ...rest } = data;
 
@@ -32,7 +39,7 @@ class TaskService {
  // Inside your Backend TaskService.ts
 async updateTask(taskId: string, userId: string, updateData: UpdateTaskPayload) {
   const currentTask = await Task.findOne({ _id: taskId, user: userId });
-  if (!currentTask) return null;
+  if (!currentTask) return { task: null, recurredTask: null };
 
   // We spread the updateData first to capture the new targetDuration
   let finalUpdate: any = { ...updateData };
@@ -56,11 +63,34 @@ async updateTask(taskId: string, userId: string, updateData: UpdateTaskPayload) 
     finalUpdate.targetDuration = currentTask.targetDuration;
   }
 
-  return await Task.findOneAndUpdate(
+  const updated = await Task.findOneAndUpdate(
     { _id: taskId, user: userId },
     { $set: finalUpdate },
     { new: true }
   );
+
+  let recurredTask = null;
+  const justCompleted = oldStatus !== 'done' && newStatus === 'done';
+  if (updated && justCompleted && currentTask.recurrence) {
+    recurredTask = await Task.create({
+      title: currentTask.title,
+      description: currentTask.description,
+      status: 'todo',
+      user: currentTask.user,
+      boardId: currentTask.boardId,
+      tags: currentTask.tags,
+      dueDate: this.computeNextDueDate(currentTask.dueDate, currentTask.recurrence),
+      targetDuration: currentTask.targetDuration,
+      recurrence: currentTask.recurrence,
+      totalTimeSpent: 0,
+      activeStartTime: null,
+    });
+    await Board.findByIdAndUpdate(currentTask.boardId, {
+      $push: { tasks: recurredTask._id }
+    });
+  }
+
+  return { task: updated, recurredTask };
 }
 
   async deleteTask(taskId: string, userId: string) {

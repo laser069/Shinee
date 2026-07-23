@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import taskService from '../services/taskService';
-import type { Task, TaskStatus, Tag } from '../types';
+import type { Task, TaskStatus, Tag, Recurrence } from '../types';
 import { TAG_COLORS } from '../types';
-import { Layout, X, Trash2, Clock, Timer, Hourglass, Tag as TagIcon } from 'lucide-react';
+import { Layout, X, Trash2, Clock, Timer, Hourglass, Tag as TagIcon, Repeat } from 'lucide-react';
 import { TagChip } from './TagChip';
 
 interface TaskModalProps {
@@ -25,6 +25,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
   const [tags, setTags] = useState<Tag[]>([]);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState<string>(TAG_COLORS[0]);
+  const [recurrenceType, setRecurrenceType] = useState<'off' | 'daily' | 'weekly'>('off');
+  const [recurrenceInterval, setRecurrenceInterval] = useState(1);
 
   const isEditMode = !!task;
 
@@ -46,6 +48,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
       setDescription(task.description || '');
       setStatus(task.status);
       setTags(task.tags || []);
+      if (task.recurrence) {
+        setRecurrenceType(task.recurrence.type);
+        setRecurrenceInterval(task.recurrence.interval);
+      } else {
+        setRecurrenceType('off');
+        setRecurrenceInterval(1);
+      }
 
       const ms = task.targetDuration;
       if (ms) {
@@ -77,6 +86,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
       setTargetUnit('h');
       setDueDate('');
       setTags([]);
+      setRecurrenceType('off');
+      setRecurrenceInterval(1);
     }
   }, [task, defaultStatus]);
 
@@ -125,6 +136,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
       if (targetUnit === 'd') mult = 86400000;
       const targetDurationMs = targetValue ? parseFloat(targetValue) * mult : 0;
 
+      const recurrence: Recurrence | null = recurrenceType === 'off' ? null : { type: recurrenceType, interval: recurrenceInterval };
+
       const payload = {
         title: title.trim(),
         description: description.trim(),
@@ -132,6 +145,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
         targetDuration: targetDurationMs,
         tags,
+        recurrence,
       };
 
       if (isEditMode && task) await taskService.updateTask(task._id, payload);
@@ -242,6 +256,36 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
                 />
               ))}
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-[10px] font-black text-[#0A0A0A] uppercase tracking-widest px-1"><Repeat className="w-4 h-4 text-[#F5C842]" /> Repeat</label>
+            <div className="flex gap-2">
+              {(['off', 'daily', 'weekly'] as const).map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setRecurrenceType(opt)}
+                  className={`flex-1 py-3 rounded-xl border-4 text-xs font-black uppercase tracking-widest transition-all ${
+                    recurrenceType === opt ? 'bg-[#0A0A0A] border-[#0A0A0A] text-white' : 'bg-white border-[#0A0A0A]/10 text-[#0A0A0A]/40 hover:border-[#0A0A0A]'
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+            {recurrenceType !== 'off' && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-[#0A0A0A]/60">Every</span>
+                <input
+                  type="number" min="1"
+                  className="w-20 bg-white border-4 border-[#0A0A0A] rounded-xl p-2 text-[#0A0A0A] outline-none font-black text-center"
+                  value={recurrenceInterval}
+                  onChange={(e) => setRecurrenceInterval(Math.max(1, Number(e.target.value)))}
+                />
+                <span className="text-xs font-bold text-[#0A0A0A]/60">{recurrenceType === 'daily' ? 'day(s)' : 'week(s)'}</span>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-4 pt-4">

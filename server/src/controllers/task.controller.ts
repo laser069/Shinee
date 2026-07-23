@@ -55,13 +55,13 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     const updateData: UpdateTaskPayload = req.body;
 
     // Pass to service: service handles the oldStatus vs newStatus logic
-    const task = await taskService.updateTask(taskId, req.user.id, updateData);
-    
+    const { task, recurredTask } = await taskService.updateTask(taskId, req.user.id, updateData);
+
     if (!task) {
       return res.status(404).json({ success: false, message: "Task not found or unauthorized" });
     }
 
-    res.json({ success: true, data: task });
+    res.json({ success: true, data: task, recurredTask: recurredTask || undefined });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
