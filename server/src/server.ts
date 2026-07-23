@@ -9,6 +9,7 @@ import boardRoutes from './routes/board.route';
 import taskRoutes from './routes/task.route';
 import habitRoutes from './routes/habit.routes';
 import statsRoutes from './routes/stats.route';
+import notificationRoutes from './routes/notification.route';
 
 const app = express();
 // const PORT =process.env.PORT
@@ -30,6 +31,7 @@ app.use("/api/boards",boardRoutes);
 app.use("/api/tasks",taskRoutes);
 app.use("/api/habits",habitRoutes)
 app.use("/api/stats",statsRoutes)
+app.use("/api/notifications",notificationRoutes)
 app.listen(env.PORT,()=>{
     console.log(`Server running at http://localhost:${env.PORT}`);
 })

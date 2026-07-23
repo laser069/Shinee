@@ -4,3 +4,4 @@ export * from './board';
 export * from './task';
 export * from './user';
 export * from './stats';
+export * from './notification';
