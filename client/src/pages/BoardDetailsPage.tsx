@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import boardService from '../services/boardService';
 import taskService from '../services/taskService';
@@ -150,6 +150,8 @@ const DeadlineCountdown: React.FC<{ dueDate: string; status: TaskStatus }> = ({ 
 
 const BoardPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [board, setBoard] = useState<Board | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,6 +175,17 @@ const BoardPage: React.FC = () => {
   }, [id]);
 
   useEffect(() => { fetchBoardDetails(); }, [fetchBoardDetails]);
+
+  useEffect(() => {
+    const openTaskId = (location.state as { openTaskId?: string } | null)?.openTaskId;
+    if (!openTaskId || tasks.length === 0) return;
+    const task = tasks.find(t => t._id === openTaskId);
+    if (task) {
+      setSelectedTask(task);
+      setIsModalOpen(true);
+      navigate(location.pathname, { replace: true });
+    }
+  }, [tasks, location, navigate]);
 
   const onDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;

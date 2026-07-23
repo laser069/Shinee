@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Search } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuth();
@@ -50,6 +51,14 @@ export const Navbar: React.FC = () => {
                 className="text-[#0A0A0A] hover:text-[#F5C842] font-bold transition-colors"
               >
                 Calendar
+              </button>
+
+              <button
+                onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
+                className="flex items-center gap-1.5 px-3 py-1.5 border-2 border-[#0A0A0A]/20 rounded-lg text-[#0A0A0A]/50 hover:border-[#0A0A0A] hover:text-[#0A0A0A] transition-colors text-xs font-black"
+                title="Search (Ctrl+K)"
+              >
+                <Search className="w-3.5 h-3.5" /> Ctrl+K
               </button>
 
               <span className="text-[#0A0A0A]/60 font-medium italic">
