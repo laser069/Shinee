@@ -45,6 +45,13 @@ export const Navbar: React.FC = () => {
                 Stats
               </button>
 
+              <button
+                onClick={() => navigate('/calendar')}
+                className="text-[#0A0A0A] hover:text-[#F5C842] font-bold transition-colors"
+              >
+                Calendar
+              </button>
+
               <span className="text-[#0A0A0A]/60 font-medium italic">
                 Hi, <span className="text-[#0A0A0A] not-italic font-bold">{user?.name}</span>
               </span>
