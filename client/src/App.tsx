@@ -8,6 +8,7 @@ import BoardDetailsPage from './pages/BoardDetailsPage';
 import DashboardPage from './pages/DashboardPage';
 import HabitsPage from './pages/HabitsPage';
 import StatsPage from './pages/StatsPage';
+import CalendarPage from './pages/CalendarPage';
 
 function App() {
   return (
@@ -53,6 +54,15 @@ function App() {
                 </div>
               </ProtectedRoute>
             } 
+          />
+
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <CalendarPage />
+              </ProtectedRoute>
+            }
           />
 
           <Route
