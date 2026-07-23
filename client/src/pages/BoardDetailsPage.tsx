@@ -4,8 +4,10 @@ import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-p
 import boardService from '../services/boardService';
 import taskService from '../services/taskService';
 import { TaskModal } from '../components/TaskModal';
+import { TagFilterBar } from '../components/TagFilterBar';
+import { TagChip } from '../components/TagChip';
 import { Plus, Loader2, ChevronLeft, Clock, Timer, AlertCircle } from 'lucide-react';
-import type { Board, Task, TaskStatus } from '../types';
+import type { Board, Task, TaskStatus, Tag } from '../types';
 
 // --- SUB-COMPONENT: REAL-TIME ANALYTICS ---
 // --- SUB-COMPONENT: REAL-TIME ANALYTICS ---
@@ -154,6 +156,7 @@ const BoardPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeStatus, setActiveStatus] = useState<TaskStatus>('todo');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   const fetchBoardDetails = useCallback(async () => {
     if (!id) return;
@@ -234,6 +237,10 @@ const BoardPage: React.FC = () => {
         </div>
       </header>
 
+      <div className="px-8 pt-6">
+        <TagFilterBar tasks={tasks} selectedTags={selectedTags} onChange={setSelectedTags} />
+      </div>
+
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-8 px-8 py-10 flex-1 overflow-x-auto bg-[#0A0A0A]/5">
           {columns.map(column => (
@@ -247,7 +254,10 @@ const BoardPage: React.FC = () => {
               <Droppable droppableId={column.id}>
                 {(provided, snapshot) => (
                   <div {...provided.droppableProps} ref={provided.innerRef} onDoubleClick={() => handleOpenCreate(column.id)} className={`flex-1 transition-colors min-h-[200px] cursor-cell ${snapshot.isDraggingOver ? 'bg-[#F5C842]/10' : ''}`}>
-                    {tasks.filter(t => t.status === column.id).map((task, index) => (
+                    {tasks
+                      .filter(t => t.status === column.id)
+                      .filter(t => selectedTags.length === 0 || (t.tags || []).some(tag => selectedTags.some(sel => sel.name === tag.name && sel.color === tag.color)))
+                      .map((task, index) => (
                       <Draggable key={task._id} draggableId={task._id} index={index}>
                         {(provided, snapshot) => (
                           <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} onDoubleClick={(e) => handleOpenEdit(e, task)} className={`bg-white border-4 border-[#0A0A0A] p-6 rounded-2xl mb-6 cursor-pointer hover:bg-[#F5C842]/5 transition-all shadow-[8px_8px_0px_0px_rgba(10,10,10,1)] ${snapshot.isDragging ? 'rotate-3 scale-105 z-50' : ''}`}>
@@ -256,6 +266,11 @@ const BoardPage: React.FC = () => {
                               {task.dueDate && <DeadlineCountdown dueDate={task.dueDate} status={task.status} />}
                             </div>
                             <p className="text-sm font-bold text-[#0A0A0A]/60 line-clamp-2 leading-relaxed mb-4">{task.description}</p>
+                            {task.tags && task.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-4">
+                                {task.tags.map((tag, i) => <TagChip key={`${tag.name}-${tag.color}-${i}`} tag={tag} />)}
+                              </div>
+                            )}
                             <TaskAnalytics task={task} />
                           </div>
                         )}
