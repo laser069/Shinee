@@ -2,6 +2,13 @@ import { z } from "zod";
 
 export const TaskStatusEnum = z.enum(['todo', 'inprogress', 'done']);
 
+export const TAG_COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#3b82f6', '#a855f7'] as const;
+
+export const TagSchema = z.object({
+  name: z.string().min(1).max(30),
+  color: z.enum(TAG_COLORS),
+});
+
 export const TaskSchema = z.object({
   _id: z.string().optional(),
   title: z
@@ -26,7 +33,10 @@ export const TaskSchema = z.object({
   activeStartTime: z.string().datetime().optional().nullable(),
 
   // 4. THE GOAL / DURATION (ms)
-  targetDuration: z.number().optional().nullable(), 
+  targetDuration: z.number().optional().nullable(),
+
+  // 5. TAGS/LABELS (fixed color palette)
+  tags: z.array(TagSchema).default([]),
 
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),

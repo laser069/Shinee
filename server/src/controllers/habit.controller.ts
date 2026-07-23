@@ -54,6 +54,14 @@ export const toggleActivity = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // New Check: Prevent logging for future dates
+    if (dayjs(date).isAfter(dayjs(), 'day')) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot log habits for future dates."
+      });
+    }
+
     const result = await habitService.toggleActivity(userId, {
       habitId,
       date,

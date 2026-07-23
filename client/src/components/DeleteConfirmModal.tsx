@@ -1,18 +1,20 @@
 import React from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
-  habitName: string;
+  name: string;
   onConfirm: () => void;
   onCancel: () => void;
+  title?: string;
 }
 
 export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   isOpen,
-  habitName,
+  name,
   onConfirm,
-  onCancel
+  onCancel,
+  title = "Are you sure?"
 }) => {
   if (!isOpen) return null;
 
@@ -25,12 +27,12 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
           </div>
           
           <h2 className="text-2xl font-black text-[#0A0A0A] uppercase tracking-tighter mb-2">
-            Delete Habit?
+            {title}
           </h2>
           
           <p className="text-sm text-[#0A0A0A]/60 font-medium mb-8">
-            Are you sure you want to delete <span className="font-black text-[#0A0A0A]">"{habitName}"</span>? 
-            This action cannot be undone and all progress will be lost.
+            Are you sure you want to delete <span className="font-black text-[#0A0A0A]">"{name}"</span>? 
+            This action cannot be undone and all data will be lost.
           </p>
           
           <div className="flex gap-4 w-full">

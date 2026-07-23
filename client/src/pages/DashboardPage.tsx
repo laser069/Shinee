@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import boardService from '../services/boardService';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { type Board } from '../types';
-import { Layout, Plus, Calendar, ArrowRight, Loader2 } from 'lucide-react';
+import { Layout, Plus, Calendar, ArrowRight, Loader2, Trash2 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const [boards, setBoards] = useState<Board[]>([]);
   const [newBoardTitle, setNewBoardTitle] = useState('');
   const [loading, setLoading] = useState(true);
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean, boardId?: string, boardTitle?: string }>({ open: false });
 
   const loadBoards = async () => {
     try {
@@ -38,6 +40,23 @@ const Dashboard: React.FC = () => {
       }
     } catch (error) {
       console.error("Error creating board", error);
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, id: string, title: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDeleteModal({ open: true, boardId: id, boardTitle: title });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.boardId) return;
+    try {
+      await boardService.deleteBoard(deleteModal.boardId);
+      setBoards(prev => prev.filter(b => b._id !== deleteModal.boardId));
+      setDeleteModal({ open: false });
+    } catch (error) {
+      console.error("Error deleting board", error);
     }
   };
 
@@ -98,7 +117,15 @@ const Dashboard: React.FC = () => {
                 <div className="p-3 bg-[#0A0A0A] rounded-xl text-[#F5C842]">
                   <Layout className="w-6 h-6" />
                 </div>
-                <ArrowRight className="w-5 h-5 text-[#0A0A0A] group-hover:translate-x-1 transition-transform" />
+                <div className="flex gap-2">
+                  <button 
+                    onClick={(e) => handleDeleteClick(e, board._id, board.title)}
+                    className="p-2 text-[#0A0A0A]/20 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                  <ArrowRight className="w-5 h-5 text-[#0A0A0A] group-hover:translate-x-1 transition-transform mt-2" />
+                </div>
               </div>
               
               <h2 className="text-xl font-black text-[#0A0A0A] mb-4 uppercase">{board.title}</h2>
@@ -111,6 +138,14 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
       )}
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.open}
+        name={deleteModal.boardTitle || ''}
+        title="Delete Workspace?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteModal({ open: false })}
+      />
     </div>
   );
 };

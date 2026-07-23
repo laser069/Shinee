@@ -1,5 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface ITag {
+  name: string;
+  color: string;
+}
+
 export interface ITask extends Document {
   title: string;
   description?: string;
@@ -10,26 +15,34 @@ export interface ITask extends Document {
   totalTimeSpent: number;
   activeStartTime?: Date | null;
   targetDuration: number;
+  tags: ITag[];
   createdAt: Date;
   updatedAt: Date;
 }
 
+const tagSchema = new Schema<ITag>({
+  name: { type: String, required: true, trim: true, maxlength: 30 },
+  color: { type: String, required: true },
+}, { _id: false });
+
 const taskSchema = new Schema<ITask>({
   title: { type: String, required: true, trim: true },
   description: { type: String, trim: true },
-  status: { 
-    type: String, 
-    enum: ['todo', 'inprogress', 'done'], 
-    default: 'todo' 
+  status: {
+    type: String,
+    enum: ['todo', 'inprogress', 'done'],
+    default: 'todo'
   },
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   boardId: { type: Schema.Types.ObjectId, ref: 'Board', required: true },
-  
+
   // Time Tracking Fields
   dueDate: { type: Date },
   totalTimeSpent: { type: Number, default: 0 },
   activeStartTime: { type: Date, default: null },
   targetDuration: { type: Number }, // Optional, no hardcoded default
+
+  tags: { type: [tagSchema], default: [] },
 }, { timestamps: true });
 
 // Exporting as "Task"
