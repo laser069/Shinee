@@ -1,6 +1,7 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Navbar } from './components/Navbar';
+import { CommandPalette } from './components/CommandPalette';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -14,6 +15,7 @@ function App() {
   return (
     <div className="min-h-screen w-full bg-white text-[#0A0A0A] overflow-x-hidden">
       <Navbar />
+      <CommandPalette />
 
        <main className="w-full relative flex-1">
         <Routes>
