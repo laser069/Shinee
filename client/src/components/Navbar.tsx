@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Search } from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
 
 export const Navbar: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuth();
@@ -60,6 +61,8 @@ export const Navbar: React.FC = () => {
               >
                 <Search className="w-3.5 h-3.5" /> Ctrl+K
               </button>
+
+              <NotificationBell />
 
               <span className="text-[#0A0A0A]/60 font-medium italic">
                 Hi, <span className="text-[#0A0A0A] not-italic font-bold">{user?.name}</span>
