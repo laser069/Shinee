@@ -37,11 +37,13 @@ const taskService = {
   },
 
   /**
-   * Update task details or status (e.g., Drag & Drop move)
+   * Update task details or status (e.g., Drag & Drop move).
+   * If the update completes a recurring task, the server also returns the
+   * newly materialized next instance as `recurredTask`.
    */
-  updateTask: async (id: string, payload: UpdateTaskPayload): Promise<Task> => {
-    const { data } = await apiClient.patch<ApiResponse<Task>>(`/tasks/${id}`, payload);
-    return data.data;
+  updateTask: async (id: string, payload: UpdateTaskPayload): Promise<{ task: Task; recurredTask?: Task }> => {
+    const { data } = await apiClient.patch<ApiResponse<Task> & { recurredTask?: Task }>(`/tasks/${id}`, payload);
+    return { task: data.data, recurredTask: data.recurredTask };
   },
 
   /**
