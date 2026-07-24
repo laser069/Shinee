@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @font-face {
   font-family: 'Syne';
   src: url('./assets/Syne/Syne-VariableFont_wght.ttf') format('truetype');
@@ -32,6 +34,26 @@
   --primary: #FFFFFF;
   --secondary: #0A0A0A;
   --accent: #F5C842;
+
+  --bg: #FFFFFF;
+  --surface: #F5F5F5;
+  --fg: #0A0A0A;
+  --border: #0A0A0A;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --bg: #0A0A0A;
+  --surface: #161616;
+  --fg: #F5F5F5;
+  --border: #F5C842;
+}
+
+@theme {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-fg: var(--fg);
+  --color-border: var(--border);
 }
 
 strong, b, 
