@@ -5,6 +5,11 @@ export interface ITag {
   color: string;
 }
 
+export interface ISubtask {
+  title: string;
+  completed: boolean;
+}
+
 export interface ITask extends Document {
   title: string;
   description?: string;
@@ -16,6 +21,7 @@ export interface ITask extends Document {
   activeStartTime?: Date | null;
   targetDuration: number;
   tags: ITag[];
+  subtasks: ISubtask[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +30,11 @@ const tagSchema = new Schema<ITag>({
   name: { type: String, required: true, trim: true, maxlength: 30 },
   color: { type: String, required: true },
 }, { _id: false });
+
+const subtaskSchema = new Schema<ISubtask>({
+  title: { type: String, required: true, trim: true, maxlength: 120 },
+  completed: { type: Boolean, default: false },
+}, { _id: true });
 
 const taskSchema = new Schema<ITask>({
   title: { type: String, required: true, trim: true },
@@ -43,6 +54,7 @@ const taskSchema = new Schema<ITask>({
   targetDuration: { type: Number }, // Optional, no hardcoded default
 
   tags: { type: [tagSchema], default: [] },
+  subtasks: { type: [subtaskSchema], default: [] },
 }, { timestamps: true });
 
 // Exporting as "Task"

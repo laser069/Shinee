@@ -9,6 +9,12 @@ export const TagSchema = z.object({
   color: z.enum(TAG_COLORS),
 });
 
+export const SubtaskSchema = z.object({
+  _id: z.string().optional(),
+  title: z.string().min(1).max(120),
+  completed: z.boolean().default(false),
+});
+
 export const TaskSchema = z.object({
   _id: z.string().optional(),
   title: z
@@ -37,6 +43,9 @@ export const TaskSchema = z.object({
 
   // 5. TAGS/LABELS (fixed color palette)
   tags: z.array(TagSchema).default([]),
+
+  // 6. SUBTASKS / CHECKLIST
+  subtasks: z.array(SubtaskSchema).default([]),
 
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
