@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import taskService from '../services/taskService';
-import type { Task, TaskStatus, Tag } from '../types';
+import type { Task, TaskStatus, Tag, Subtask } from '../types';
 import { TAG_COLORS } from '../types';
 import { Layout, X, Trash2, Clock, Timer, Hourglass, Tag as TagIcon } from 'lucide-react';
 import { TagChip } from './TagChip';
+import { SubtaskList } from './SubtaskList';
 
 interface TaskModalProps {
   boardId: string;
@@ -25,6 +26,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
   const [tags, setTags] = useState<Tag[]>([]);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState<string>(TAG_COLORS[0]);
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
 
   const isEditMode = !!task;
 
@@ -46,6 +48,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
       setDescription(task.description || '');
       setStatus(task.status);
       setTags(task.tags || []);
+      setSubtasks(task.subtasks || []);
 
       const ms = task.targetDuration;
       if (ms) {
@@ -77,6 +80,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
       setTargetUnit('h');
       setDueDate('');
       setTags([]);
+      setSubtasks([]);
     }
   }, [task, defaultStatus]);
 
@@ -132,6 +136,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
         targetDuration: targetDurationMs,
         tags,
+        subtasks,
       };
 
       if (isEditMode && task) await taskService.updateTask(task._id, payload);
@@ -243,6 +248,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ boardId, defaultStatus, ta
               ))}
             </div>
           </div>
+
+          <SubtaskList subtasks={subtasks} onChange={setSubtasks} />
 
           <div className="flex gap-4 pt-4">
             {isEditMode && (
