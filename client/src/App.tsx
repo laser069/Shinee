@@ -1,6 +1,8 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Navbar } from './components/Navbar';
+import { PomodoroWidget } from './components/PomodoroWidget';
+import { useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -10,9 +12,12 @@ import HabitsPage from './pages/HabitsPage';
 import StatsPage from './pages/StatsPage';
 
 function App() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <div className="min-h-screen w-full bg-white text-[#0A0A0A] overflow-x-hidden">
       <Navbar />
+      {isAuthenticated && <PomodoroWidget />}
 
        <main className="w-full relative flex-1">
         <Routes>
