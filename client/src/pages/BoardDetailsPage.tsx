@@ -6,7 +6,7 @@ import taskService from '../services/taskService';
 import { TaskModal } from '../components/TaskModal';
 import { TagFilterBar } from '../components/TagFilterBar';
 import { TagChip } from '../components/TagChip';
-import { Plus, Loader2, ChevronLeft, Clock, Timer, AlertCircle } from 'lucide-react';
+import { Plus, Loader2, ChevronLeft, Clock, Timer, AlertCircle, ListChecks } from 'lucide-react';
 import type { Board, Task, TaskStatus, Tag } from '../types';
 
 // --- SUB-COMPONENT: REAL-TIME ANALYTICS ---
@@ -269,6 +269,12 @@ const BoardPage: React.FC = () => {
                             {task.tags && task.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mb-4">
                                 {task.tags.map((tag, i) => <TagChip key={`${tag.name}-${tag.color}-${i}`} tag={tag} />)}
+                              </div>
+                            )}
+                            {task.subtasks && task.subtasks.length > 0 && (
+                              <div className="flex items-center gap-1.5 mb-4 text-xs font-black text-[#0A0A0A]/60">
+                                <ListChecks className="w-3.5 h-3.5" />
+                                {task.subtasks.filter(s => s.completed).length}/{task.subtasks.length}
                               </div>
                             )}
                             <TaskAnalytics task={task} />
