@@ -5,10 +5,19 @@ import { CreateHabitPayload } from '../schemas/habit.schema';
 import dayjs from 'dayjs';
 
 class HabitService {
-  private calculateMonday(date: dayjs.Dayjs): Date {
+  /**
+   * Monday 00:00 of the week containing `date`, in whatever mode (local/UTC)
+   * `date` carries. Public so the controller resolves a dayIndex against the
+   * same week boundary instead of duplicating the math.
+   */
+  mondayOf(date: dayjs.Dayjs): dayjs.Dayjs {
     const dayOfWeek = date.day();
     const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    return date.subtract(daysFromMonday, 'day').startOf('day').toDate();
+    return date.subtract(daysFromMonday, 'day').startOf('day');
+  }
+
+  calculateMonday(date: dayjs.Dayjs): Date {
+    return this.mondayOf(date).toDate();
   }
 
   private getStartOfWeek(): Date {

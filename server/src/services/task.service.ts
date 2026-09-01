@@ -3,7 +3,14 @@ import Board from '../models/Board';
 import { CreateTaskPayload, UpdateTaskPayload } from '../schemas/task.schema';
 
 class TaskService {
+  /**
+   * Returns null when the board does not exist or is not owned by the caller,
+   * so a user cannot plant a task inside somebody else's board.
+   */
   async createTask(userId: string, boardId: string, data: CreateTaskPayload) {
+    const board = await Board.findOne({ _id: boardId, user: userId }).select('_id');
+    if (!board) return null;
+
     const { dueDate, targetDuration, ...rest } = data;
 
     const task = await Task.create({
@@ -25,8 +32,12 @@ class TaskService {
     return await Task.find({ user: userId }).sort({ createdAt: -1 });
   }
 
-  async getTasksByBoard(boardId: string) {
-    return await Task.find({ boardId }).sort({ createdAt: -1 });
+  async getTasksByBoard(boardId: string, userId: string) {
+    return await Task.find({ boardId, user: userId }).sort({ createdAt: -1 });
+  }
+
+  async getTaskById(taskId: string, userId: string) {
+    return await Task.findOne({ _id: taskId, user: userId });
   }
 
  // Inside your Backend TaskService.ts

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { env } from "../config/env";
 /**
  * The Validation Schema
  * This handles the "logic" (e.g., how long a password must be)
@@ -21,11 +20,9 @@ export const UserRegistrationSchema = z.object({
     .min(8, "Password must be at least 8 characters")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[0-9]/, "Password must contain at least one number"),
-  
-  isAdmin: z
-    .boolean()
-    .default(false)
-    .optional(),
+
+  // isAdmin is deliberately NOT accepted here - it was client-settable, which
+  // let anyone self-register as an admin. The Mongoose default (false) governs.
 });
 
 /**

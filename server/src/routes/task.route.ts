@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { 
-  createTask, 
-  getMyTasks, 
-  updateTask, 
-  deleteTask 
+import {
+  createTask,
+  getMyTasks,
+  getTaskById,
+  updateTask,
+  deleteTask
 } from "../controllers/task.controller";
 import { protect } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validate.middleware";
@@ -18,6 +19,7 @@ router.route("/")
   .post(validate(CreateTaskSchema), createTask);
 
 router.route("/:id")
+  .get(getTaskById)
   .patch(validate(UpdateTaskPayloadSchema), updateTask)
   .delete(deleteTask);
 

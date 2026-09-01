@@ -15,6 +15,11 @@ export const createTask = async (req: AuthRequest, res: Response) => {
 
     // Default time values are set by the Mongoose Schema, so we just pass text/status
     const task = await taskService.createTask(req.user.id, boardId, taskData);
+
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Board not found or unauthorized" });
+    }
+
     res.status(201).json({ success: true, data: task });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -29,12 +34,28 @@ export const getMyTasks = async (req: AuthRequest, res: Response) => {
     let tasks;
 
     if (boardId && typeof boardId === 'string') {
-      tasks = await taskService.getTasksByBoard(boardId);
+      tasks = await taskService.getTasksByBoard(boardId, req.user.id);
     } else {
       tasks = await taskService.getTasksByUser(req.user.id);
     }
     
     res.json({ success: true, data: tasks });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getTaskById = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const task = await taskService.getTaskById(req.params.id as string, req.user.id);
+
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found or unauthorized" });
+    }
+
+    res.json({ success: true, data: task });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

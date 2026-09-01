@@ -3,6 +3,7 @@ import userService from "../services/user.service"; // Import the singleton inst
 import { UserRegistrationSchema } from "../schemas/user.schema";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { ZodError } from "zod";
 import { env } from "../config/env";
 
 // Extend Request for protected routes
@@ -31,10 +32,14 @@ export const register = async (req: Request, res: Response) => {
     });
     
   } catch (error: any) {
-    if (error.name === "ZodError") {
-      return res.status(400).json({ message: error.errors[0]?.message });
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: error.issues[0]?.message ?? "Request validation failed",
+        errors: error.issues
+      });
     }
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 

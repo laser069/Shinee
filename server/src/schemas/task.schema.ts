@@ -30,13 +30,14 @@ export const TaskSchema = z.object({
   boardId: z.string().optional(),
   
   // 1. THE "HARD" DEADLINE
-  dueDate: z.string().datetime().optional().nullable(),
+  // offset: true also accepts "+05:30"-style ISO strings, not just UTC "Z".
+  dueDate: z.string().datetime({ offset: true }).optional().nullable(),
 
   // 2. THE TOTAL ACCUMULATED TIME (ms)
   totalTimeSpent: z.number().default(0),
 
   // 3. THE "PLAY" TIMESTAMP (ISO string)
-  activeStartTime: z.string().datetime().optional().nullable(),
+  activeStartTime: z.string().datetime({ offset: true }).optional().nullable(),
 
   // 4. THE GOAL / DURATION (ms)
   targetDuration: z.number().optional().nullable(),

@@ -19,7 +19,10 @@ export const getBoards = async (req: AuthRequest, res: Response) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    const boards = await boardService.getAllBoards(req.user.id);
+    // ?populate=false returns a lean list (task ids only). Anything else keeps
+    // the populated shape the web client expects.
+    const populate = req.query.populate !== 'false';
+    const boards = await boardService.getAllBoards(req.user.id, populate);
     res.json({ success: true, data: boards });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

@@ -7,7 +7,9 @@ export interface IHabit extends Document {
   
   // Logic Config
   frequencyType: 'fixed' | 'flexible';
-  fixedDays: number[]; // [0-6] where 0 is Sunday, 1 is Monday...
+  // [0-6] where 0 is Monday .. 6 is Sunday. This matches the WeeklyLog `days`
+  // map and habit.service.ts, and is the contract every client follows.
+  fixedDays: number[];
   goalCount: number;   // e.g., 3 if they want to do it 3x a week
   
   // Gamification & Streaks
