@@ -28,7 +28,10 @@ app.use(cors({
     // `!origin` covers native clients (Android) and curl, which send no Origin
     // header at all.
     if (!origin || corsOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`Origin not allowed by CORS: ${origin}`));
+
+    const error: Error & { status?: number } = new Error(`Origin not allowed by CORS: ${origin}`);
+    error.status = 403;
+    return callback(error);
   },
   credentials: true,
 }));

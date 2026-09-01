@@ -66,6 +66,27 @@ describe('0.1 JSON 404 + global error handler', () => {
   });
 });
 
+describe('0.6 CORS allowlist', () => {
+  it('allows the configured web origin', async () => {
+    const res = await request(app).get('/ping').set('Origin', 'http://localhost:3000');
+
+    expect(res.status).toBe(200);
+    expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+  });
+
+  it('allows a request with no Origin header (native clients)', async () => {
+    const res = await request(app).get('/ping');
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects an unlisted origin with 403, not 500', async () => {
+    const res = await request(app).get('/ping').set('Origin', 'http://evil.example');
+
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
+  });
+});
+
 describe('0.2 register cannot self-grant admin', () => {
   it('ignores a client-supplied isAdmin flag', async () => {
     const res = await request(app)
