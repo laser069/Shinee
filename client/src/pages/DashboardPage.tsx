@@ -73,11 +73,11 @@ const Dashboard: React.FC = () => {
     <div className="max-w-7xl mx-auto py-10 px-6">
       <header className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
         <div>
-          <h1 className="text-4xl font-black text-[#0A0A0A] tracking-tight flex items-center gap-3">
+          <h1 className="text-4xl font-black text-fg tracking-tight flex items-center gap-3">
              <Layout className="w-8 h-8 text-[#F5C842]" />
              Workspaces
           </h1>
-          <p className="text-[#0A0A0A]/60 mt-2 font-bold">Your centralized project hubs.</p>
+          <p className="text-fg/60 mt-2 font-bold">Your centralized project hubs.</p>
         </div>
         
         <form onSubmit={handleCreateBoard} className="flex gap-2">
@@ -86,12 +86,12 @@ const Dashboard: React.FC = () => {
             value={newBoardTitle}
             onChange={(e) => setNewBoardTitle(e.target.value)}
             placeholder="New workspace name..."
-            className="bg-white border-4 border-[#0A0A0A] p-3 rounded-xl w-64 text-[#0A0A0A] focus:bg-[#F5C842]/10 outline-none transition-all font-bold"
+            className="bg-bg border-4 border-border p-3 rounded-xl w-64 text-fg focus:bg-[#F5C842]/10 outline-none transition-all font-bold"
           />
           <button 
             type="submit" 
             disabled={!newBoardTitle.trim()}
-            className="bg-[#0A0A0A] disabled:opacity-50 text-white px-6 py-3 rounded-xl font-black hover:bg-[#F5C842] hover:text-[#0A0A0A] transition-all flex items-center gap-2"
+            className="bg-fg disabled:opacity-50 text-bg px-6 py-3 rounded-xl font-black hover:bg-[#F5C842] hover:text-[#0A0A0A] transition-all flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
             Create
@@ -100,10 +100,10 @@ const Dashboard: React.FC = () => {
       </header>
       
       {safeBoards.length === 0 ? (
-        <div className="text-center py-20 bg-white border-4 border-[#0A0A0A] rounded-3xl shadow-[8px_8px_0px_0px_rgba(10,10,10,1)]">
-           <Layout className="w-16 h-16 text-[#0A0A0A]/20 mx-auto mb-4" />
-           <h2 className="text-xl font-black text-[#0A0A0A]">No workspaces found</h2>
-           <p className="text-[#0A0A0A]/60 font-bold">Create a board to start managing tasks.</p>
+        <div className="text-center py-20 bg-bg border-4 border-border rounded-3xl shadow-[8px_8px_0px_0px_rgba(10,10,10,1)]">
+           <Layout className="w-16 h-16 text-fg/20 mx-auto mb-4" />
+           <h2 className="text-xl font-black text-fg">No workspaces found</h2>
+           <p className="text-fg/60 font-bold">Create a board to start managing tasks.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -111,26 +111,26 @@ const Dashboard: React.FC = () => {
             <Link 
               key={board._id} 
               to={`/board/${board._id}`}
-              className="group relative bg-white border-4 border-[#0A0A0A] p-6 rounded-2xl hover:bg-[#F5C842]/5 transition-all hover:-translate-y-1 shadow-[8px_8px_0px_0px_rgba(10,10,10,1)]"
+              className="group relative bg-bg border-4 border-border p-6 rounded-2xl hover:bg-[#F5C842]/5 transition-all hover:-translate-y-1 shadow-[8px_8px_0px_0px_rgba(10,10,10,1)]"
             >
               <div className="flex justify-between items-start mb-6">
-                <div className="p-3 bg-[#0A0A0A] rounded-xl text-[#F5C842]">
+                <div className="p-3 bg-fg rounded-xl text-[#F5C842]">
                   <Layout className="w-6 h-6" />
                 </div>
                 <div className="flex gap-2">
                   <button 
                     onClick={(e) => handleDeleteClick(e, board._id, board.title)}
-                    className="p-2 text-[#0A0A0A]/20 hover:text-red-500 transition-colors"
+                    className="p-2 text-fg/20 hover:text-red-500 transition-colors"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
-                  <ArrowRight className="w-5 h-5 text-[#0A0A0A] group-hover:translate-x-1 transition-transform mt-2" />
+                  <ArrowRight className="w-5 h-5 text-fg group-hover:translate-x-1 transition-transform mt-2" />
                 </div>
               </div>
               
-              <h2 className="text-xl font-black text-[#0A0A0A] mb-4 uppercase">{board.title}</h2>
+              <h2 className="text-xl font-black text-fg mb-4 uppercase">{board.title}</h2>
               
-              <div className="flex items-center gap-2 text-[#0A0A0A]/60 text-sm font-bold">
+              <div className="flex items-center gap-2 text-fg/60 text-sm font-bold">
                 <Calendar className="w-4 h-4 text-[#F5C842]" />
                 <span>{new Date(board.createdAt).toLocaleDateString()}</span>
               </div>

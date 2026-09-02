@@ -2,6 +2,9 @@ import { Response } from "express";
 import habitService from "../services/habit.service";
 import { AuthRequest } from "../middleware/auth.middleware";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
 
 /**
  * GET /api/habits/dashboard
@@ -32,18 +35,21 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
 export const toggleActivity = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    let { habitId, date, dayIndex, value, note, mood } = req.body;
+    let { habitId, date, dayIndex, weekStartDate, tzOffsetMinutes, value, note, mood } = req.body;
 
-    if (!habitId) {
-      return res.status(400).json({ success: false, message: "Habit ID is required." });
-    }
+    // "Today" from the caller's point of view. Without tzOffsetMinutes this is
+    // server local time, i.e. the original behaviour.
+    const callerNow = tzOffsetMinutes !== undefined
+      ? dayjs.utc().add(tzOffsetMinutes, 'minute')
+      : dayjs();
 
-    // If dayIndex is provided but date is not, calculate the date for the current week
+    // If dayIndex is provided but date is not, resolve it against the caller's
+    // week rather than the server's.
     if (!date && dayIndex !== undefined) {
-      const now = dayjs();
-      const day = now.day(); // Sun=0, Mon=1...
-      const diff = (day === 0 ? -6 : 1 - day); // Monday of current week
-      const weekStart = now.add(diff, 'day').startOf('day');
+      const weekStart = weekStartDate
+        ? dayjs.utc(weekStartDate).add(tzOffsetMinutes ?? 0, 'minute')
+        : habitService.mondayOf(callerNow);
+
       date = weekStart.add(dayIndex, 'day').format('YYYY-MM-DD');
     }
 
@@ -54,8 +60,14 @@ export const toggleActivity = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // New Check: Prevent logging for future dates
-    if (dayjs(date).isAfter(dayjs(), 'day')) {
+    if (!dayjs(date).isValid()) {
+      return res.status(400).json({ success: false, message: "Invalid date." });
+    }
+
+    // Prevent logging for future dates, measured in the caller's timezone.
+    // Compared as YYYY-MM-DD strings so a UTC-mode callerNow cannot skew the
+    // day boundary.
+    if (dayjs(date).format('YYYY-MM-DD') > callerNow.format('YYYY-MM-DD')) {
       return res.status(400).json({
         success: false,
         message: "Cannot log habits for future dates."

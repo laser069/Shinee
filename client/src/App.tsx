@@ -1,6 +1,8 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Navbar } from './components/Navbar';
+import { PomodoroWidget } from './components/PomodoroWidget';
+import { useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -10,9 +12,12 @@ import HabitsPage from './pages/HabitsPage';
 import StatsPage from './pages/StatsPage';
 
 function App() {
+  const { isAuthenticated } = useAuth();
+
   return (
-    <div className="min-h-screen w-full bg-white text-[#0A0A0A] overflow-x-hidden">
+    <div className="min-h-screen w-full bg-bg text-fg overflow-x-hidden">
       <Navbar />
+      {isAuthenticated && <PomodoroWidget />}
 
        <main className="w-full relative flex-1">
         <Routes>
@@ -85,25 +90,25 @@ const HomeHero = () => {
   const navigate = useNavigate();
   return (
     <div className="text-center animate-in fade-in zoom-in duration-700">
-      <h1 className="text-6xl md:text-8xl font-black text-[#0A0A0A] mb-8 tracking-tighter">
-        MASTER YOUR <br /> 
+      <h1 className="text-6xl md:text-8xl font-black text-fg mb-8 tracking-tighter">
+        MASTER YOUR <br />
         <span className="text-[#F5C842] uppercase">
           ROUTINE.
         </span>
       </h1>
-      <p className="text-xl text-[#0A0A0A]/60 max-w-2xl mx-auto mb-10 leading-relaxed font-bold">
+      <p className="text-xl text-fg/60 max-w-2xl mx-auto mb-10 leading-relaxed font-bold">
         The ultimate productivity hub. Manage high-intensity Kanban boards and professional habit trackers in one unified workspace.
       </p>
       <div className="flex flex-wrap justify-center gap-4">
-         <button 
+         <button
            onClick={() => navigate('/register')}
-           className="px-10 py-4 bg-[#0A0A0A] text-white font-black rounded-2xl hover:bg-[#F5C842] hover:text-[#0A0A0A] transition-all shadow-xl shadow-black/10"
+           className="px-10 py-4 bg-fg text-bg font-black rounded-2xl hover:bg-[#F5C842] hover:text-[#0A0A0A] transition-all shadow-xl shadow-black/10"
          >
            Get Started Today
          </button>
-         <button 
+         <button
            onClick={() => navigate('/login')}
-           className="px-10 py-4 bg-white text-[#0A0A0A] font-black rounded-2xl border-4 border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all flex items-center gap-2"
+           className="px-10 py-4 bg-bg text-fg font-black rounded-2xl border-4 border-border hover:bg-fg hover:text-bg transition-all flex items-center gap-2"
          >
            Sign In
          </button>

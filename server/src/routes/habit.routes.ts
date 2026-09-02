@@ -9,9 +9,10 @@ import {
 } from "../controllers/habit.controller";
 import { protect } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validate.middleware";
-import { 
-  CreateHabitSchema, 
-  UpdateHabitSchema 
+import {
+  CreateHabitSchema,
+  UpdateHabitSchema,
+  ToggleActivitySchema
 } from "../schemas/habit.schema";
 
 const router = Router();
@@ -31,7 +32,7 @@ router.route("/")
  * We use POST here as it involves complex streak/log logic 
  * and requires the date/value in the body.
  */
-router.post("/toggle", toggleActivity);
+router.post("/toggle", validate(ToggleActivitySchema), toggleActivity);
 
 /**
  * Specific Habit Operations

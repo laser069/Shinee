@@ -9,6 +9,12 @@ export const TagSchema = z.object({
   color: z.enum(TAG_COLORS),
 });
 
+export const SubtaskSchema = z.object({
+  _id: z.string().optional(),
+  title: z.string().min(1).max(120),
+  completed: z.boolean().default(false),
+});
+
 export const TaskSchema = z.object({
   _id: z.string().optional(),
   title: z
@@ -24,19 +30,23 @@ export const TaskSchema = z.object({
   boardId: z.string().optional(),
   
   // 1. THE "HARD" DEADLINE
-  dueDate: z.string().datetime().optional().nullable(),
+  // offset: true also accepts "+05:30"-style ISO strings, not just UTC "Z".
+  dueDate: z.string().datetime({ offset: true }).optional().nullable(),
 
   // 2. THE TOTAL ACCUMULATED TIME (ms)
   totalTimeSpent: z.number().default(0),
 
   // 3. THE "PLAY" TIMESTAMP (ISO string)
-  activeStartTime: z.string().datetime().optional().nullable(),
+  activeStartTime: z.string().datetime({ offset: true }).optional().nullable(),
 
   // 4. THE GOAL / DURATION (ms)
   targetDuration: z.number().optional().nullable(),
 
   // 5. TAGS/LABELS (fixed color palette)
   tags: z.array(TagSchema).default([]),
+
+  // 6. SUBTASKS / CHECKLIST
+  subtasks: z.array(SubtaskSchema).default([]),
 
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),

@@ -51,5 +51,41 @@ export const UpdateHabitSchema = HabitSchema.pick({
 }).partial();
 
 
+/**
+ * Body of POST /api/habits/toggle.
+ *
+ * Day indexing is Mon=0 .. Sun=6 everywhere in this codebase.
+ *
+ * `weekStartDate` and `tzOffsetMinutes` are optional and exist for clients in a
+ * timezone other than the server's: without them the week boundary and the
+ * future-date guard are computed in server local time, so a device can toggle
+ * into a different week than it renders. When both are absent the behaviour is
+ * unchanged.
+ *
+ * `tzOffsetMinutes` is minutes to ADD to UTC to reach device-local time
+ * (IST = +330), matching Dart's `DateTime.timeZoneOffset.inMinutes`. Note this
+ * is the opposite sign to JavaScript's `Date.getTimezoneOffset()`.
+ */
+export const ToggleActivitySchema = z.object({
+  habitId: z.string().min(1, "Habit ID is required"),
+  date: z.string().optional(),
+  dayIndex: z
+    .number()
+    .int("dayIndex must be a whole number")
+    .min(0, "dayIndex must be between 0 (Monday) and 6 (Sunday)")
+    .max(6, "dayIndex must be between 0 (Monday) and 6 (Sunday)")
+    .optional(),
+  weekStartDate: z.string().datetime({ offset: true }).optional(),
+  tzOffsetMinutes: z.number().int().min(-840).max(840).optional(),
+  value: z.number().optional(),
+  note: z.string().max(500).optional(),
+  mood: z.string().max(50).optional(),
+}).refine(
+  (data) => data.date !== undefined || data.dayIndex !== undefined,
+  { message: "Either date or dayIndex is required", path: ["dayIndex"] }
+);
+
+export type ToggleActivityPayload = z.infer<typeof ToggleActivitySchema>;
+
 export type Habit = z.infer<typeof HabitSchema>;
 export type CreateHabitPayload = z.infer<typeof CreateHabitSchema>;

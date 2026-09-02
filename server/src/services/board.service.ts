@@ -1,4 +1,5 @@
 import Board from '../models/Board';
+import Task from '../models/Task';
 import { CreateBoardPayload } from '../schemas/board.schema';
 
 class BoardService {
@@ -10,10 +11,16 @@ class BoardService {
     });
   }
 
-  async getAllBoards(userId: string) {
-    return await Board.find({ user: userId })
-      .populate('tasks') // Populates the task array with actual task documents
-      .sort({ createdAt: -1 });
+  /**
+   * populate defaults to true so the existing web client is unaffected.
+   * Mobile passes false to avoid pulling every task of every board.
+   */
+  async getAllBoards(userId: string, populate: boolean = true) {
+    const query = Board.find({ user: userId }).sort({ createdAt: -1 });
+    if (populate) {
+      query.populate('tasks'); // Populates the task array with actual task documents
+    }
+    return await query;
   }
 
   async getBoardById(boardId: string, userId: string) {
@@ -24,7 +31,12 @@ class BoardService {
   }
 
   async deleteBoard(boardId: string, userId: string) {
-    return await Board.findOneAndDelete({ _id: boardId, user: userId });
+    const board = await Board.findOneAndDelete({ _id: boardId, user: userId });
+    // Deleting the board used to leave its tasks behind as orphans.
+    if (board) {
+      await Task.deleteMany({ boardId: board._id });
+    }
+    return board;
   }
 
 async updateBoardTitle(boardId: string, userId: string, newTitle: string) {
